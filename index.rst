@@ -8,10 +8,12 @@
 
 .. toctree::
    :maxdepth: 1
+   :titlesonly:
 
 
    README
    about_us
+   zero_to_one/foreword
    TODO
 
 .. toctree::
