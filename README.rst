@@ -5,7 +5,7 @@
 
 本项目通过git开源：
 
-- github仓库地址：https://github.com/Embedfire/ebf_freertos_tutorial.git
+- github仓库地址：https://github.com/Embedfire-freertos/ebf_freertos_tutorial.git
 - gitee 仓库地址：https://gitee.com/wildfireteam/ebf_freertos_tutorial
 
 点击右侧链接可在线阅读本项目文档：《 `FreeRTOS 内核实现与应用开发实战—基于STM32 <https://ebf_freertos_tutorial.readthedocs.io>`_ 》
