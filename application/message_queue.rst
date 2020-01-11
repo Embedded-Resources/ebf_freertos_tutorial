@@ -153,7 +153,7 @@ FreeRTOS的消息队列控制块由多个元素组成，当消息队列被创建
     typedef xQUEUE Queue_t;
 
 
--   代码清单:消息队列-1_ **(1)**\ ：pcHead指向队列消息存储区起始位置，即第一个消息空间。
+-   代码清单:消息队列-1_ **(1)**\ ：pcHead指向队列消息存储区起始位置，即第个消息空间。
 
 -   代码清单:消息队列-1_ **(2)**\ ：pcTail指向队列消息存储区结束位置地址。
 
@@ -206,12 +206,12 @@ xQueueCreate()用于创建一个新的队列并返回可用于访问这个队列
 
 队列就是一个数据结构，用于任务间的数据的传递。每创建一个新的队列都需要为其分配RAM，一部分用于存储队列的状态，
 剩下的作为队列消息的存储区域。使用xQueueCreate()创建队列时，使用的是动态内存分配，所以要想使用该函数必须在
-FreeRTOSConfig.h中把\`configSUPPORT_DYNAMIC_ALLOCATION <http://www.freertos.org/a00110.html#configSUPPORT_DYNAMIC_ALLOCATION>`__\
+FreeRTOSConfig.h中把configSUPPORT_DYNAMIC_ALLOCATION 
 定义为1来使能，这是个用于使能动态内存分配的宏，通常情况下，在FreeRTOS中，凡是创建任务，队列，信号量和互斥量等
 内核对象都需要使用动态内存分配，所以这个宏默认在FreeRTOS.h头文件中已经使能（即定义为1）。如果想使用静态内存，
-则可以使用\ `xQueueCreateStatic() <http://www.freertos.org/xQueueCreateStatic.html>`__ 函数来创建一个队列。
+则可以使用\xQueueCreateStatic()函数来创建一个队列。
 使用静态创建消息队列函数创建队列时需要的形参更多，需要的内存由编译的时候预先分配好，一般很少使用这种方法。
-xQueueCreate()函数原型具体见 代码清单:消息队列-2_　加粗部分，使用说明具体见表15‑1。
+xQueueCreate()函数原型具体见 代码清单:消息队列-2_　高亮部分，使用说明具体见表 xQueueCreate函数说明_。
 
 .. code-block:: c
     :caption: 代码清单:消息队列-2xQueueCreate()函数原型
@@ -220,41 +220,30 @@ xQueueCreate()函数原型具体见 代码清单:消息队列-2_　加粗部分�
     :linenos:
 
     #if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
-    #define xQueueCreate( uxQueueLength, uxItemSize ) 	\
-    xQueueGenericCreate( ( uxQueueLength ), ( uxItemSize ), ( queueQUEUE_TYPE_BASE ) )
+    #define xQueueCreate( uxQueueLength, uxItemSize ) 	xQueueGenericCreate( ( uxQueueLength ), ( uxItemSize ), ( queueQUEUE_TYPE_BASE ) )
     #endif
 
 
-表15‑1xQueueCreate()函数说明
-
 .. list-table::
-   :widths: 33 33 33
+   :widths: 33 33
+   :name: xQueueCreate函数说明
    :header-rows: 0
 
 
-   * - **函数原型** | Qu
-     - ueHandle_t            | xQueueCreate( UBaseType_t uxQueueLength,  UBaseType_t uxItemSize );
-     - |
+   * - **函数原型**
+     - QueueHandle_t xQueueCreate( UBaseType_t uxQueueLength,UBaseType_t uxItemSize );
 
-   * - **功能**     |
-     - 于创建一个新的队列。   |
-     - |
+   * - **功能**
+     - 于创建一个新的队列。
 
-   * - **参数**     |
-     - xQueueLength            |
-     - 列能够存储的最大消     | 息单元数目，即队列长度。 |
+   * - **参数1**
+     - uxQueueLengt   队列能够存储的最大消息单元数目，即队列长度。
 
-   * -
-     - uxItemSize
-     - 队列中消息单             | 元的大小，以字节为单位。 |
+   * - **参数2**
+     - uxItemSize	队列中消息单元的大小，以字节为单位。
 
-   * - **返回值**   | 如
-     - 创建成功则返回一个队 | 列句柄，用于访问创建的队 | 列。如果创建不成功则返回 | NULL，可能原因是创建队列 | 需要的RAM无法分配成功。  |
-     - |
-          |
-          |
-            |
-            |
+   * - **返回值**
+     - 如果创建成功则返回一个队列句柄，用于访问创建的队列。如果创建不成功则返回NULL，可能原因是创建队列需要的RAM无法分配成功。
 
 
 从函数原型中，我们可以看到，创建队列真正使用的函数是xQueueGenericCreate()，消息队列创建函数，顾名思义，就是
@@ -332,14 +321,14 @@ xQueueCreate()函数原型具体见 代码清单:消息队列-2_　加粗部分�
 
 
 -   代码清单:消息队列-3_ **(4)**\ ：计算出消息存储内存空间的起始地址，因为\ **(3)**\ 步骤中申请的内存是包含了消息
-队列控制块的内存空间，但是我们存储消息的内存空间在消息队列控制块后面。
+    队列控制块的内存空间，但是我们存储消息的内存空间在消息队列控制块后面。
 
 -   代码清单:消息队列-3_ **(5)**\ ：调用prvInitialiseNewQueue()函数将消息队列进行初始化。其实xQueueGenericCreate()
-主要是用于分配消息队列内存的，消息队列初始化函数源码具体见 代码清单:消息队列-4_。
+    主要是用于分配消息队列内存的，消息队列初始化函数源码具体见 代码清单:消息队列-4_。
 
 .. code-block:: c
     :caption: 代码清单:消息队列-4prvInitialiseNewQueue()函数源码
-    :name: 代码清单:消息队列-
+    :name: 代码清单:消息队列-4
     :linenos:
 
     /*-----------------------------------------------------------*/
@@ -496,13 +485,12 @@ xQueueCreate()函数原型具体见 代码清单:消息队列-2_　加粗部分�
 在创建消息队列的时候，是需要用户自己定义消息队列的句柄的，但是注意了，定义了队列的句柄并不等于创建了队列，创建
 队列必须是调用消息队列创建函数进行创建（可以是静态也可以是动态创建），否则，以后根据队列句柄使用消息队列的其他
 函数的时候会发生错误，创建完成会返回消息队列的句柄，用户通过句柄就可使用消息队列进行发送与读取消息队列的操作，
-如果返回的是NULL则表示创建失败，消息队列创建函数xQueueCreate()使用实例具体见 代码清单:消息队列-6_ 加粗部分。
+如果返回的是NULL则表示创建失败，消息队列创建函数xQueueCreate()使用实例具体见 代码清单:消息队列-6_ 高亮部分。
 
 .. code-block:: c
     :caption: 代码清单:消息队列-6xQueueCreate()实例
-    :name: 代码清单:消息队列-
+    :name: 代码清单:消息队列-6
     :linenos:
-
 
     QueueHandle_t Test_Queue =NULL;
 
@@ -532,52 +520,43 @@ xQueueCreateStatic()用于创建一个新的队列并返回可用于访问这个
 剩下的作为队列的存储区。使用xQueueCreateStatic()创建队列时，使用的是静态内存分配，所以要想使用该函数必须在
 FreeRTOSConfig.h中把configSUPPORT_STATIC_ALLOCATION定义为1来使能。这是个用于使能静态内存分配的宏，需要的
 内存在程序编译的时候分配好，由用户自己定义，其实创建过程与xQueueCreate()都是差不多的，我们暂不深入讲解。
-xQueueCreateStatic()函数的具体说明见表15‑2，使用实例具体见 代码清单:消息队列-7加粗_ 部分。
+xQueueCreateStatic()函数的具体说明见表 xQueueCreateStatic函数说明_，使用实例具体见 代码清单:消息队列-7_ 高亮部分。
 
-表15‑2xQueueCreateStatic()函数说明
 
 .. list-table::
-   :widths: 33 33 33
+   :widths: 33 33
+   :name: xQueueCreateStatic函数说明
    :header-rows: 0
 
 
-   * - **函数原型** | Qu
-     - ueHandle_t            | xQueue CreateStatic(UBaseType_t uxQueueLength,  UBaseType_t uxItemSize,  uint8_t \*pucQueueStorageBuffer,  StaticQueue_t
-       \*pxQueueBuffer );
-     - |
+   * - **函数原型**
+     - QueueHandle_t xQueueCreateStatic(UBaseType_t uxQueueLength,UBaseType_t uxItemSize,uint8_t \*pucQueueStorageBuffer,StaticQueue_t \*pxQueueBuffer );
 
-   * - **功能**     |
-     - 于创建一个新的队列。   |
-     - |
+   * - **功能**
+     - 于创建一个新的队列。
 
-   * - **参数**     |
-     - xQueueLength            |
-     - 列能够存储的最         | 大单元数目，即队列深度。 |
+   * - **参数**
+     - uxQueueLength	队列能够存储的最大单元数目，即队列深度。
 
-   * -
-     - uxItemSize
-     - 队列中数据单             | 元的长度，以字节为单位。 |
+   * - **参数**
+     - uxItemSize	队列中数据单元的长度，以字节为单位。
 
-   * -
-     - pucQueueStorageBuffer
-     - 指针，指向一个uin        | t8_t类型的数组，数组的大 | 小至少有uxQueueLength\*  | uxItemSize个字节。当ux   | ItemSize为0时，pucQueueS | torageBuffer可以为NULL。 |
+   * - **参数**
+     - pucQueueStorageBuffer	指针，指向一个uint8_t类型的数组，数组的大小至少
+       有uxQueueLength* uxItemSize个字节。当uxItemSize为0时，pucQueueStorageBuffer可以为NULL。
 
-   * -
-     - pxQueueBuffer
-     - 指针，指向StaticQ        | ueue_t类型的变量，该变量 | 用于存储队列的数据结构。 |
+   * - **参数**
+     - pxQueueBuffer	指针，指向StaticQueue_t类型的变量，该变量用于存储队列的数据结构。
 
-   * - **返回值**   | 如
-     - 创建成功则返回一个队 | 列句柄，用于访问创建的队 | 列。如果创建不成功则返回 | NULL，可能原因是创建队列 | 需要的RAM无法分配成功。  |
-     - |
-          |
-          |
-            |
-            |
+   * - **返回值**
+     - 如果创建成功则返回一个队列句柄，用于访问创建的队列。如
+       果创建不成功则返回NULL，可能原因是创建队列需要的RAM无法分配成功。
 
 
 .. code-block:: c
     :caption: 代码清单:消息队列-7xQueueCreateStatic()函数使用实例
     :name: 代码清单:消息队列-7
+    :emphasize-lines: 9,15-19
     :linenos:
 
     /* 创建一个可以最多可以存储10个64位变量的队列 */
@@ -594,12 +573,12 @@ xQueueCreateStatic()函数的具体说明见表15‑2，使用实例具体见 �
     {
         QueueHandle_t xQueue;
 
-    /* 创建一个队列 */
+        /* 创建一个队列 */
         xQueue = xQueueCreateStatic( QUEUE_LENGTH,      /* 队列深度 */
                                     ITEM_SIZE,         /* 队列数据单元的单位 */
                                     ucQueueStorageArea,/* 队列的存储区域 */
-    &xStaticQueue );   /* 队列的数据结构 */
-    /* 剩下的其他代码 */
+                                    &xStaticQueue );   /* 队列的数据结构 */
+                                    /* 剩下的其他代码 */
     }
 
 
@@ -609,7 +588,7 @@ xQueueCreateStatic()函数的具体说明见表15‑2，使用实例具体见 �
 队列删除函数是根据消息队列句柄直接删除的，删除之后这个消息队列的所有信息都会被系统回收清空，而且不能再次使用
 这个消息队列了，但是需要注意的是，如果某个消息队列没有被创建，那也是无法被删除的，动脑子想想都知道，没创建的
 东西就不存在，怎么可能被删除。xQueue是vQueueDelete()函数的形参，是消息队列句柄，表示的是要删除哪个想队列，
-其函数源码具体见代码清单:消息队列-8。
+其函数源码具体见 代码清单:消息队列-8_。
 
 .. code-block:: c
     :caption: 代码清单:消息队列-8消息队列删除函数vQueueDelete()源码（已省略暂时无用部分）
@@ -650,11 +629,12 @@ xQueueCreateStatic()函数的具体说明见表15‑2，使用实例具体见 �
 这个消息队列。需要注意的是调用删除消息队列函数前，系统应存在xQueueCreate()或xQueueCreateStatic()函数创建的
 消息队列。此外vQueueDelete()也可用于删除信号量。如果删除消息队列时，有任务正在等待消息，则不应该进行删除操作
 （官方说的是不允许进行删除操作，但是源码并没有禁止删除的操作，使用的时候注意一下就行了），删除消息队列的实例具
-体见 代码清单:消息队列-9_ 加粗部分。
+体见 代码清单:消息队列-9_ 高亮部分。
 
 .. code-block:: c
     :caption: 代码清单:消息队列-9消息队列删除函数vQueueDelete()使用实例
     :name: 代码清单:消息队列-9
+    :emphasize-lines: 13-14
     :linenos:
 
     #define QUEUE_LENGTH    5
@@ -702,10 +682,10 @@ xQueueSend()与xQueueSendToBack()
                     ( xTicksToWait ), queueSEND_TO_BACK )
 
 
-    .. code-block:: c
-        :caption: 代码清单:消息队列-11xQueueSendToBack()函数原型
-        :name: 代码清单:消息队列-
-        :linenos:
+.. code-block:: c
+    :caption: 代码清单:消息队列-11xQueueSendToBack()函数原型
+    :name: 代码清单:消息队列-
+    :linenos:
 
     #define xQueueSendToBack( xQueue, pvItemToQueue, xTicksToWait ) 	\
         xQueueGenericSend( ( xQueue ), ( pvItemToQueue ), 	\
@@ -718,46 +698,39 @@ ueSendToBack()。
 
 xQueueSend()用于向队列尾部发送一个队列消息。消息以拷贝的形式入队，而不是以引用的形式。该函数绝对不能在中断服
 务程序里面被调用，中断中必须使用带有中断保护功能的xQueueSendFromISR()来代替。xQueueSend()函数的具体
-说明见表15‑3，应用实例具体见 代码清单:消息队列-12_ 加粗部分。
+说明见表 xQueueSend函数说明_，应用实例具体见 代码清单:消息队列-12_ 高亮部分。
 
-表15‑3xQueueSend()函数说明
 
 .. list-table::
-   :widths: 33 33 33
+   :widths: 33 33
+   :name: xQueueSend函数说明
    :header-rows: 0
 
 
-   * - **函数原型** | Ba
-     - eType_t               | xQueueSend(QueueHandle_t xQueue,  const void \* pvItemToQueue,  TickType_t xTicksToWait);
-     - |
+   * - **函数原型**
+     - BaseType_t xQueueSend(QueueHandle_t xQueue,const void * pvItemToQueue,TickType_t xTicksToWait);
 
-   * - **功能**     |
-     - 于向队                 | 列尾部发送一个队列消息。 |
-     - |
 
-   * - **参数**     |
-     - Queue                   |
-     - 列句柄。               |
+   * - **功能**
+     - 用于向队列尾部发送一个队列消息。
 
-   * -
-     - pvItemToQueue
-     - 指针，指向要发           | 送到队列尾部的队列消息。 |
+   * - **参数**
+     - xQueue	队列句柄。
 
-   * -
-     - xTicksToWait
-     - 队                       | 列满时，等待队列空闲的最 | 大超时时间。如果队列满并 | 且xTicksToWait被设置成0  | ，函数立刻返回。超时时间 | 的单位为系统节拍周期，常 | 量portTICK_PERIOD_MS用于 | 辅助计算真实的时间，单位 |
-       为ms。如果INCLUDE_vTask  | Suspend设置成1，并且指定 | 延时为portMAX_DELAY将导  | 致任务挂起（没有超时）。 |
+   * - **参数**
+     - pvItemToQueue	指针，指向要发送到队列尾部的队列消息。
 
-   * - **返回值**   | 消
-     - | 发送成功成功返回pdTRUE， | 否则返回errQUEUE_FULL。  |
-     - |
+   * - **参数**
+     - xTicksToWait	队列满时，等待队列空闲的最大超时时间。如果队列满并且xTicksToWait被设置成0，函数立刻返回。超时时间的单位为系统节拍周期，常量portTICK_PERIOD_MS用于辅助计算真实的时间，单位为ms。如果INCLUDE_vTaskSuspend设置成1，并且指定延时为portMAX_DELAY将导致任务挂起（没有超时）。
 
-       |
+   * - **返回值**
+     - 消息发送成功成功返回pdTRUE，否则返回errQUEUE_FULL。
 
 
 .. code-block:: c
     :caption: 代码清单:消息队列-12xQueueSend()函数使用实例
-    :name: 代码清单:消息队列-
+    :name: 代码清单:消息队列-12
+    :emphasize-lines: 9-14,18-23
     :linenos:
 
     static void Send_Task(void* parameter)
@@ -818,70 +791,63 @@ xQueueSendToBackFromISR等同于xQueueSendFromISR ()。
 
 xQueueSendFromISR()是一个宏，宏展开是调用函数xQueueGenericSendFromISR()。该宏是xQueueSend()的中断保护版
 本，用于在中断服务程序中向队列尾部发送一个队列消息，等价于xQueueSendToBackFromISR()。xQueueSendFromISR()
-函数具体说明见表15‑4，使用实例具体见 代码清单:消息队列-15_ 加粗部分。
+函数具体说明见表 xQueueSendFromISR函数说明_，使用实例具体见 代码清单:消息队列-15_ 高亮部分。
 
-表15‑4xQueueSendFromISR()函数说明
 
 .. list-table::
-   :widths: 33 33 33
+   :widths: 33 33
+   :name: xQueueSendFromISR函数说明
    :header-rows: 0
 
 
-   * - **函数原型** | Ba
-     - eType_t               | xQueueS endFromISR(QueueHandle_t xQueue,  const void \*pvItemToQueue,  BaseType_t \*pxH igherPriorityTaskWoken);
-     - |
+   * - **函数原型**
+     - BaseType_t xQueueSendFromISR(QueueHandle_t xQueue,const void \*pvItemToQueue,BaseType_t \*pxHigherPriorityTaskWoken);
 
-   * - **功能**     |
-     - 中断服务程序中用于     | 向队列尾部发送一个消息。 |
-     - |
-       |
 
-   * - **参数**     |
-     - Queue                   |
-     - 列句柄。               |
+   * - **功能**
+     - 在中断服务程序中用于向队列尾部发送一个消息。
 
-   * -
-     - pvItemToQueue
-     - 指针，指向               | 要发送到队列尾部的消息。 |
+   * - **参数**
+     - xQueue	队列句柄。
 
-   * -
-     - p xHigherPriorityTaskWoken
-     - 如                       | 果入队导致一个任务解锁， | 并且解锁的任务优先级高于 | 当前被中断的任务，则将*p | xHigherPriorityTaskWoken 设置成pdTRUE，然后在中断 | 退出前需要进行一次上下文 | 切换，去执行被唤醒的优先 |
-       级更高的任务。从FreeRTOS | V7.3.0起，pxHigherPri    | orityTaskWoken作为一个可 | 选参数，可以设置为NULL。 |
+   * - **参数**
+     - pvItemToQueue	指针，指向要发送到队列尾部的消息。
 
-   * - **返回值**   | 消
-     - 发送成功返回pdTRUE， | 否则返回errQUEUE_FULL。  |
-     - |
-              |
+   * - **参数**
+     - pxHigherPriorityTaskWoken	如果入队导致一个任务解锁，并且解锁的任务优先级高于当前被中断的任务，则将*pxHigherPriorityTaskWoken设置成pdTRUE，然后在中断退出前需要进行一次上下文切换，去执行被唤醒的优先级更高的任务。从FreeRTOS V7.3.0起，pxHigherPriorityTaskWoken作为一个可选参数，可以设置为NULL。
+
+   * - **返回值**
+     - 消息发送成功返回pdTRUE，否则返回errQUEUE_FULL。
 
 
 .. code-block:: c
     :caption: 代码清单:消息队列-15xQueueSendFromISR()函数使用实例
     :name: 代码清单:消息队列-15
+    :emphasize-lines: 4,7,14-15,19-23
     :linenos:
 
 
     void vBufferISR( void )
     {
-    char cIn;
+        char cIn;
         BaseType_t xHigherPriorityTaskWoken;
 
-    /* 在ISR开始的时候，我们并没有唤醒任务 */
+        /* 在ISR开始的时候，我们并没有唤醒任务 */
         xHigherPriorityTaskWoken = pdFALSE;
 
-    /* 直到缓冲区为空 */
+        /* 直到缓冲区为空 */
     do {
-    /* 从缓冲区获取一个字节的数据 */
+            /* 从缓冲区获取一个字节的数据 */
             cIn = portINPUT_BYTE( RX_REGISTER_ADDRESS );
 
-    /* 发送这个数据 */
+            /* 发送这个数据 */
             xQueueSendFromISR( xRxQueue, &cIn, &xHigherPriorityTaskWoken );
 
         } while ( portINPUT_BYTE( BUFFER_COUNT ) );
 
     /* 这时候buffer已经为空，如果需要则进行上下文切换 */
     if ( xHigherPriorityTaskWoken ) {
-    /* 上下文切换，这是一个宏，不同的处理器，具体的方法不一样 */
+            /* 上下文切换，这是一个宏，不同的处理器，具体的方法不一样 */
             taskYIELD_FROM_ISR ();
         }
     }
@@ -902,41 +868,34 @@ xQueueSendToFront()
 
 xQueueSendToFron()是一个宏，宏展开也是调用函数xQueueGenericSend()。xQueueSendToFront()用于向队列队首发送
 一个消息。消息以拷贝的形式入队，而不是以引用的形式。该函数绝不能在中断服务程序里面被调用，而是必须使用带有中断
-保护功能的xQueueSendToFrontFromISR ()来代替。xQueueSendToFron()函数的具体说明见表15‑5，
+保护功能的xQueueSendToFrontFromISR ()来代替。xQueueSendToFron()函数的具体说明见表 xQueueSendToFron函数说明_，
 使用方式与xQueueSend()函数一致。
 
-表15‑5xQueueSendToFron()函数说明
 
 .. list-table::
-   :widths: 33 33 33
+   :widths: 33 33
+   :name: xQueueSendToFron函数说明
    :header-rows: 0
 
 
-   * - **函数原型** | Ba
-     - eType_t               | xQueueSendToFront( QueueHandle_t xQueue,  const void \* pvItemToQueue,  TickType_t xTicksToWait );
-     - |
+   * - **函数原型**
+     - BaseType_t xQueueSendToFront( QueueHandle_t xQueue,const void \* pvItemToQueue,TickType_t xTicksToWait );
 
-   * - **功能**     |
-     - | 向队列队首发送一个消息。 |
-     - |
 
-   * - **参数**     |
-     - Queue                   |
-     - 列句柄。               |
+   * - **功能**
+     - 于向队列队首发送一个消息。
 
-   * -
-     - pvItemToQueue
-     - 指针，                   | 指向要发送到队首的消息。 |
+   * - **参数**
+     - xQueue	队列句柄。
 
-   * -
-     - xTicksToWait
-     - 队列满                   | 时，等待队列空闲的最大超 | 时时间。如果队列满并且x  | TicksToWait被设置成0，函 | 数立刻返回。超时时间的单 | 位为系统节拍周期，常量po | rtTICK_PERIOD_MS用于辅助 | 计算真实的时间，单位为m  |
-       s。如果INCLUDE_vTaskSusp | end设置成1，并且指定延时 | 为portMAX_DELAY将导致任  | 务无限阻塞（没有超时）。 |
+   * - **参数**
+     - pvItemToQueue	指针，指向要发送到队首的消息。
 
-   * - **返回值**   | 发
-     - 消息成功返回pdTRUE， | 否则返回errQUEUE_FULL。  |
-     - |
-              |
+   * - **参数**
+     - xTicksToWait	队列满时，等待队列空闲的最大超时时间。如果队列满并且xTicksToWait被设置成0，函数立刻返回。超时时间的单位为系统节拍周期，常量portTICK_PERIOD_MS用于辅助计算真实的时间，单位为ms。如果INCLUDE_vTaskSuspend设置成1，并且指定延时为portMAX_DELAY将导致任务无限阻塞（没有超时）。
+
+   * - **返回值**
+     - 发送消息成功返回pdTRUE，否则返回errQUEUE_FULL。
 
 
 xQueueSendToFrontFromISR()
@@ -944,7 +903,7 @@ xQueueSendToFrontFromISR()
 
 .. code-block:: c
     :caption: 代码清单:消息队列-17 xQueueSendToFrontFromISR()函数原型
-    :name: 代码清单:消息队列-
+    :name: 代码清单:消息队列-17
     :linenos:
 
 
@@ -955,41 +914,33 @@ xQueueSendToFrontFromISR()
 
 xQueueSendToFrontFromISR()是一个宏，宏展开是调用函数xQueueGenericSendFromISR()。该宏是
 xQueueSendToFront()的中断保护版本，用于在中断服务程序中向消息队列队首发送一个消息
-。xQueueSendToFromISR()函数具体说明见表15‑6，使用方式与xQueueSendFromISR()函数一致。
+。xQueueSendToFromISR()函数具体说明见表 xQueueSendToFromISR函数说明_，使用方式与xQueueSendFromISR()函数一致。
 
-表15‑6xQueueSendToFromISR()函数说明
 
 .. list-table::
-   :widths: 33 33 33
+   :widths: 33 33
+   :name: xQueueSendToFromISR函数说明
    :header-rows: 0
 
 
-   * - **函数原型** | Ba
-     - eType_t               | xQueueSendToFr ontFromISR(QueueHandle_t xQueue,  const void \*pvItemToQueue,  BaseType_t \*pxH igherPriorityTaskWoken);
-     - |
+   * - **函数原型**
+     - BaseType_t xQueueSendToFrontFromISR(QueueHandle_t xQueue, const void \*pvItemToQueue,BaseType_t \*pxHigherPriorityTaskWoken);
 
-   * - **功能**     |
-     - 中断服务程序中向消     | 息队列队首发送一个消息。 |
-     - |
-       |
 
-   * - **参数**     |
-     - Queue                   |
-     - 列句柄。               |
+   * - **功能**
+     - 在中断服务程序中向消息队列队首发送一个消息。
 
-   * -
-     - pvItemToQueue
-     - 指针，                   | 指向要发送到队首的消息。 |
+   * - **参数**
+     - xQueue	队列句柄。
 
-   * -
-     - p xHigherPriorityTaskWoken
-     - 如                       | 果入队导致一个任务解锁， | 并且解锁的任务优先级高于 | 当前被中断的任务，则将*p | xHigherPriorityTaskWoken 设置成pdTRUE，然后在中断 | 退出前需要进行一次上下文 | 切换，去执行被唤醒的优先 |
-       级更高的任务。从FreeRTOS | V7.3.0起，pxHigherPri    | orityTaskWoken作为一个可 | 选参数，可以设置为NULL。 |
+   * - **参数**
+     - pvItemToQueue	指针，指向要发送到队首的消息。
 
-   * - **返回值**   | 队
-     - | 列项投递成功返回pdTRUE， | 否则返回errQUEUE_FULL。  |
-     - |
+   * - **参数**
+     - pxHigherPriorityTaskWoken	如果入队导致一个任务解锁，并且解锁的任务优先级高于当前被中断的任务，则将*pxHigherPriorityTaskWoken设置成pdTRUE，然后在中断退出前需要进行一次上下文切换，去执行被唤醒的优先级更高的任务。从FreeRTOS V7.3.0起，pxHigherPriorityTaskWoken作为一个可选参数，可以设置为NULL。
 
+   * - **返回值**
+     - 队列项投递成功返回pdTRUE，否则返回errQUEUE_FULL。
 
 通用消息队列发送函数xQueueGenericSend()（任务）
 '''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -1000,7 +951,7 @@ xQueueGenericSend()函数，根据指定的参数不一样，发送消息的结�
 
 .. code-block:: c
     :caption: 代码清单:消息队列-18 xQueueGenericSend()\ **函数源码（已删减）**
-    :name: 代码清单:消息队列-
+    :name: 代码清单:消息队列-18
     :linenos:
 
 
@@ -1307,45 +1258,38 @@ xQueueReceive()与xQueuePeek()
 xQueueReceive()是一个宏，宏展开是调用函数xQueueGenericReceive()。xQueueReceive()用于从一个队列中接收消息
 并把消息从队列中删除。接收的消息是以拷贝的形式进行的，所以我们必须提供一个足够大空间的缓冲区。具体能够拷贝多少
 数据到缓冲区，这个在队列创建的时候已经设定。该函数绝不能在中断服务程序里面被调用，而是必须使用带有中断保护功能
-的xQueueReceiveFromISR ()来代替。xQueueReceive()函数的具体说明见表15‑7，应用实例见代码清单:消息队列-21加粗部分。
+的xQueueReceiveFromISR ()来代替。xQueueReceive()函数的具体说明见表 xQueueReceive函数说明_，应用实例见 代码清单:消息队列-21_ 高亮部分。
 
 表15‑7xQueueReceive()函数说明
 
 .. list-table::
-   :widths: 33 33 33
+   :widths: 33 33
+   :name: xQueueReceive函数说明
    :header-rows: 0
 
 
-   * - **函数原型** | Ba
-     - eType_t               | xQu eueReceive(QueueHandle_t xQueue,  void \*pvBuffer,  TickType_t xTicksToWait);
-     - |
+   * - **函数原型**
+     - BaseType_t xQueueReceive(QueueHandle_t xQueue,void \*pvBuffer,TickType_t xTicksToWait);
 
-   * - **功能**     |
-     - 于从                   | 一个队列中接收消息，并把 | 接收的消息从队列中删除。 |
-     - |
+   * - **功能**
+     - 用于从一个队列中接收消息，并把接收的消息从队列中删除。
 
-   * - **参数**     |
-     - Queue                   |
-     - 列句柄。               |
+   * - **参数**
+     - xQueue	队列句柄。
 
-   * -
-     - pvBuffer
-     - 指针，                   | 指向接收到要保存的数据。 |
+   * - **参数**
+     - pvBuffer	指针，指向接收到要保存的数据。
 
-   * -
-     - xTicksToWait
-     - 队列                     | 空时，阻塞超时的最大时间 | 。如果该参数设置为0，函  | 数立刻返回。超时时间的单 | 位为系统节拍周期，常量po | rtTICK_PERIOD_MS用于辅助 | 计算真实的时间，单位为m  | s。如果INCLUDE_vTaskSusp |
-       end设置成1，并且指定延时 | 为portMAX_DELAY将导致任  | 务无限阻塞（没有超时）。 |
+   * - **参数**
+     - xTicksToWait	队列空时，阻塞超时的最大时间。如果该参数设置为0，函数立刻返回。超时时间的单位为系统节拍周期，常量portTICK_PERIOD_MS用于辅助计算真实的时间，单位为ms。如果INCLUDE_vTaskSuspend设置成1，并且指定延时为portMAX_DELAY将导致任务无限阻塞（没有超时）。
 
-   * - **返回值**   | 队
-     - 项接收成功返回p      | dTRUE，否则返回pdFALSE。 |
-     - |
-             |
-
+   * - **返回值**
+     - 队列项接收成功返回pdTRUE，否则返回pdFALSE。
 
 .. code-block:: c
     :caption: 代码清单:消息队列-21xQueueReceive()函数使用实例
     :name: 代码清单:消息队列-21
+    :emphasize-lines: 6-12
     :linenos:
 
     static void Receive_Task(void* parameter)
@@ -1368,11 +1312,11 @@ xQueueReceive()是一个宏，宏展开是调用函数xQueueGenericReceive()。x
 除消息的话，就调用xQueuePeek()函数。
 
 其实这个函数与xQueueReceive()函数的实现方式一样，连使用方法都一样，只不过xQueuePeek()函数接收消息完毕不会删
-除消息队列中的消息而已，函数原型具体见代码清单:消息队列-22。
+除消息队列中的消息而已，函数原型具体见 代码清单:消息队列-22_。
 
 .. code-block:: c
     :caption: 代码清单:消息队列-22xQueuePeek()函数原型
-    :name: 代码清单:消息队列-
+    :name: 代码清单:消息队列-22
     :linenos:
 
     #define xQueuePeek( xQueue, pvBuffer, xTicksToWait ) 		\
@@ -1385,74 +1329,63 @@ xQueueReceiveFromISR()与xQueuePeekFromISR()
 xQueueReceiveFromISR()是xQueueReceive ()的中断版本，用于在中断服务程序中接收一个队列消息并把消息从队列中删
 除；xQueuePeekFromISR()是xQueuePeek()的中断版本，用于在中断中从一个队列中接收消息，但并不会把消息从队列中移除。
 
-说白了这两个函数只能用于中断，是不带有阻塞机制的，并且是在中断中可以安全调用，函数说明具体见表15‑8与表15‑9，
-函数的使用实例具体见代码清单:消息队列-23加粗部分。
+说白了这两个函数只能用于中断，是不带有阻塞机制的，并且是在中断中可以安全调用，函数说明具体见表 xQueueReceiveFromISR函数说明_ 与表 xQueuePeekFromISR函数说明_，
+函数的使用实例具体见 代码清单:消息队列-23_ 高亮部分。
 
 表15‑8xQueueReceiveFromISR()函数说明
 
 .. list-table::
-   :widths: 33 33 33
+   :widths: 33 33
+   :name: xQueueReceiveFromISR函数说明
    :header-rows: 0
 
 
-   * - **函数原型** | Ba
-     - eType_t               | xQueueRece iveFromISR(QueueHandle_t xQueue,  void \*pvBuffer,  BaseType_t \*pxH igherPriorityTaskWoken);
-     - |
-
-   * - **功能**     |
-     - 中                     | 断中从一个队列中接收消息 | ，并从队列中删除该消息。 |
-     - |
-
-   * - **参数**     |
-     - Queue                   |
-     - 列句柄。               |
-
-   * -
-     - pvBuffer
-     - 指针，                   | 指向接收到要保存的数据。 |
-
-   * -
-     - p xHigherPriorityTaskWoken
-     - 任务在往队               | 列投递信息时，如果队列满 | ，则任务将阻塞在该队列上 | 。如果xQueueReceiveFromI | SR()到账了一个任务解锁了 | 则将*pxHigherPriorityTas | kWoken设置为pdTRUE，否则 |
-       *pxHigherPriorityTaskWok en的值将不变。从FreeRTOS | V7.3.0起，pxHigherPri    | orityTaskWoken作为一个可 | 选参数，可以设置为NULL。 |
-
-   * - **返回值**   | 队
-     - 项接收成功返回p      | dTRUE，否则返回pdFALSE。 |
-     - |
-             |
+   * - **函数原型**
+     - BaseType_t xQueueReceiveFromISR(QueueHandle_t xQueue,void \*pvBuffer,BaseType_t \*pxHigherPriorityTaskWoken);
 
 
-表15‑9xQueuePeekFromISR()函数说明
+   * - **功能**
+     - 在中断中从一个队列中接收消息，并从队列中删除该消息。
+
+   * - **参数**
+     - xQueue	队列句柄。
+
+   * - **参数**
+     - pvBuffer	指针，指向接收到要保存的数据。
+
+   * - **参数**
+     - pxHigherPriorityTaskWoken	任务在往队列投递信息时，如果队列满，则任务将阻塞在该队列上。如果xQueueReceiveFromISR()到账了一个任务解锁了则将*pxHigherPriorityTaskWoken设置为pdTRUE，否则*pxHigherPriorityTaskWoken的值将不变。从FreeRTOS V7.3.0起，pxHigherPriorityTaskWoken作为一个可选参数，可以设置为NULL。
+
+   * - **返回值**
+     - 队列项接收成功返回pdTRUE，否则返回pdFALSE。
+
 
 .. list-table::
-   :widths: 33 33 33
+   :widths: 33 33
+   :name: xQueuePeekFromISR函数说明
    :header-rows: 0
 
 
-   * - **函数原型** | Ba
-     - eType_t               | xQueueP eekFromISR(QueueHandle_t xQueue,  void \*pvBuffer);
-     - |
+   * - **函数原型**
+     - BaseType_t xQueuePeekFromISR(QueueHandle_t xQueue,void \*pvBuffer);
 
-   * - **功能**     |
-     - 中断中从一             | 个队列中接收消息，但并不 | 会把消息从该队列中移除。 |
-     - |
 
-   * - **参数**     |
-     - Queue                   |
-     - 列句柄。               |
+   * - **功能**
+     - 在中断中从一个队列中接收消息，但并不会把消息从该队列中移除。
 
-   * -
-     - pvBuffer
-     - 指针，                   | 指向接收到要保存的数据。 |
+   * - **参数**
+     - xQueue	队列句柄。
 
-   * - **返回值**   | 队
-     - | 列项接收(peek)成功返回p  | dTRUE，否则返回pdFALSE。 |
-     - |
+   * - **参数**
+     - pvBuffer	指针，指向接收到要保存的数据。
 
+   * - **返回值**
+     - 队列项接收(peek)成功返回pdTRUE，否则返回pdFALSE。
 
 .. code-block:: c
     :caption: 代码清单:消息队列-23xQueueReceiveFromISR()函数使用实例
     :name: 代码清单:消息队列-23
+    :emphasize-lines: 36-38,48-52
     :linenos:
 
     QueueHandle_t xQueue;
@@ -1515,11 +1448,11 @@ xQueueReceiveFromISR()是xQueueReceive ()的中断版本，用于在中断服务
 ''''''''''''''''''''''''''''''''''''''''
 
 由于在中断中接收消息的函数用的并不多，我们只讲解在任务中读取消息的函数——xQueueGenericReceive()，
-具体见代码清单:消息队列-24。
+具体见 代码清单:消息队列-24_。
 
 .. code-block:: c
     :caption: 代码清单:消息队列-24xQueueGenericReceive()函数源码
-    :name: 代码清单:消息队列-
+    :name: 代码清单:消息队列-24
     :linenos:
 
     /*-----------------------------------------------------------*/
@@ -1720,17 +1653,20 @@ xQueueReceiveFromISR()是xQueueReceive ()的中断版本，用于在中断服务
 
 在使用FreeRTOS提供的消息队列函数的时候，需要了解以下几点：
 
-1. 使用xQueueSend()、xQueueSendFromISR()、xQueueReceive()等这些函数之前应先创建需消息队列，并根据队列句柄进行操作。
+-   1. 使用xQueueSend()、xQueueSendFromISR()、xQueueReceive()等这些函数之前应先创建需消息队
+    列，并根据队列句柄进行操作。
 
-2. 队列读取采用的是先进先出（FIFO）模式，会先读取先存储在队列中的数据。当然也FreeRTOS也支持后进先出（LIFO）
-模式，那么读取的时候就会读取到后进队列的数据。
+-   2. 队列读取采用的是先进先出（FIFO）模式，会先读取先存储在队列中的数据。当然也FreeRTOS也支持后进先出（LIFO）
+    模式，那么读取的时候就会读取到后进队列的数据。
 
-3. 在获取队列中的消息时候，我们必须要定义一个存储读取数据的地方，并且该数据区域大小不小于消息大小，否则，很可能引发地址非法的错误。
+-   3. 在获取队列中的消息时候，我们必须要定义一个存储读取数据的地方，并且
+    该数据区域大小不小于消息大小，否则，很可能引发地址非法的错误。
 
-4. 无论是发送或者是接收消息都是以拷贝的方式进行，如果消息过于庞大，可以将消息的地址作为消息进行发送、接收。
+-   4. 无论是发送或者是接收消息都是以拷贝的方式进行，如果消息过于
+    庞大，可以将消息的地址作为消息进行发送、接收。
 
-5. 队列是具有自己独立权限的内核对象，并不属于任何任务。所有任务都可以向同一队列写入和读出。一个队列由多任务或
-中断写入是经常的事，但由多个任务读出倒是用的比较少。
+-   5. 队列是具有自己独立权限的内核对象，并不属于任何任务。所有任务都可以向同一队列写入和读出。一个队列由多任务或
+    中断写入是经常的事，但由多个任务读出倒是用的比较少。
 
 消息队列实验
 ~~~~~~~~~~~~~~~~~~
@@ -1738,13 +1674,13 @@ xQueueReceiveFromISR()是xQueueReceive ()的中断版本，用于在中断服务
 消息队列实验是在FreeRTOS中创建了两个任务，一个是发送消息任务，一个是获取消息任务，两个任务独立运行，发送消息
 任务是通过检测按键的按下情况来发送消息，假如发送消息不成功，就把返回的错误情代码在串口打印出来，另一个任务是获
 取消息任务，在消息队列没有消息之前一直等待消息，一旦获取到消息就把消息打印在串口调试助手里，
-具体见代码清单:消息队列-25加粗部分。
+具体见 代码清单:消息队列-25_ 高亮部分。
 
 .. code-block:: c
     :caption: 代码清单:消息队列-25消息队列实验
-    :name: 代码清单:消息队列-
+    :name: 代码清单:消息队列-25
+    :emphasize-lines: 64-65,124-128,161-174,182-208
     :linenos:
-
 
     /**
     *********************************************************************
