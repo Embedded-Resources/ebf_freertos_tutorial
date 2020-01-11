@@ -171,14 +171,14 @@ H任务>M任务>L任务。正常运行的时候H任务可以打断M任务与L任
 互斥量的API函数实际上都是宏，它使用现有的队列机制，这些宏定义在semphr.h文件中，如果使用互斥量，需
 要包含semphr.h头文件。所以FreeRTOS的互斥量控制块结构体与消息队列结构体是一模一样的，只不过结构体
 中某些成员变量代表的含义不一样而已，我们会具体讲解一下哪里与消息队列不一样。先来看看结构体控制块，
-具体见代码清单17‑1加粗部分。
+具体见 代码清单:信号量-1_ 加粗部分。
 
 注意：没说明的部分与消息队列一致。
 
 .. code-block:: c
-    :caption: 代码清单17‑1互斥量控制块
+    :caption: 代码清单:信号量-1互斥量控制块
     :emphasize-lines: 14-16
-    :name: 代码清单:信号量-
+    :name: 代码清单:信号量-1
     :linenos:
 
     typedefstruct QueueDefinition {
@@ -220,21 +220,21 @@ H任务>M任务>L任务。正常运行的时候H任务可以打断M任务与L任
     typedef xQUEUE Queue_t;
 
 
-代码清单17‑1\ **(1)**\ ： pcReadFrom与uxRecursiveCallCount是一对互斥变量，使用联合体用来确
-保两个互斥的结构体成员不会同时出现。当结构体用于队列时，pcReadFrom指向出队消息空间的最后一个，
-见文知义，就是读取消息时候是从pcReadFrom指向的空间读取消息内容。当结构体用于互斥量时，
-uxRecursiveCallCount用于计数，记录递归互斥量被“调用”的次数。
+-   代码清单:信号量-1_ **(1)**\ ： pcReadFrom与uxRecursiveCallCount是一对互斥变量，使用联合体用来确
+    保两个互斥的结构体成员不会同时出现。当结构体用于队列时，pcReadFrom指向出队消息空间的最后一个，
+    见文知义，就是读取消息时候是从pcReadFrom指向的空间读取消息内容。当结构体用于互斥量时，
+    uxRecursiveCallCount用于计数，记录递归互斥量被“调用”的次数。
 
-代码清单17‑1\ **(2)**\ ：如果控制块结构体是用于消息队列：uxMessagesWaiting用来记录当前消息队
-列的消息个数；如果控制块结构体被用于互斥量的时候，这个值就表示有效互斥量个数，这个值是1则表示互
-斥量有效，如果是0则表示互斥量无效。
+-   代码清单:信号量-1_ **(2)**\ ：如果控制块结构体是用于消息队列：uxMessagesWaiting用来记录当前消息队
+    列的消息个数；如果控制块结构体被用于互斥量的时候，这个值就表示有效互斥量个数，这个值是1则表示互
+    斥量有效，如果是0则表示互斥量无效。
 
-代码清单17‑1\ **(3)**\ ：如果控制块结构体是用于消息队列：uxLength表示队列的长度，也就是能存放
-多少消息；如果控制块结构体被用于互斥量的时候，uxLength表示最大的信号量可用个数，uxLength最大为
-1，因为信号量要么是有效的，要么是无效的。
+-   代码清单:信号量-1_ **(3)**\ ：如果控制块结构体是用于消息队列：uxLength表示队列的长度，也就是能存放
+    多少消息；如果控制块结构体被用于互斥量的时候，uxLength表示最大的信号量可用个数，uxLength最大为
+    1，因为信号量要么是有效的，要么是无效的。
 
-代码清单17‑1\ **(4)**\ ：如果控制块结构体是用于消息队列：uxItemSize表示单个消息的大小；如果控
-制块结构体被用于互斥量的时候，则无需存储空间，为0即可。
+-   代码清单:信号量-1_ **(4)**\ ：如果控制块结构体是用于消息队列：uxItemSize表示单个消息的大小；如果控
+    制块结构体被用于互斥量的时候，则无需存储空间，为0即可。
 
 互斥量函数接口讲解
 ~~~~~~~~~~~~~~~~~~~~~
@@ -249,146 +249,100 @@ xSemaphoreCreateMutex()用于创建一个互斥量，并返回一个互斥量句
 把configUSE_MUTEXES宏定义打开，表示使用互斥量。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-2 xSemaphoreCreateMutex()函数原型
+    :name: 代码清单:信号量-2
     :linenos:
-代码清单17‑2 xSemaphoreCreateMutex()函数原型
 
-1 #if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+    #if( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
+    #define xSemaphoreCreateMutex() xQueueCreateMutex( queueQUEUE_TYPE_MUTEX )
+    #endif
 
-2 #define xSemaphoreCreateMutex() xQueueCreateMutex( queueQUEUE_TYPE_MUTEX )
-
-3 #endif
 
 从xSemaphoreCreateMutex()函数原型就可以看出，创建互斥量其实是调用xQueueCreateMutex函数，下面看
-看xQueueCreateMutex的源码，具体见代码清单17‑3。
+看xQueueCreateMutex的源码，具体见 代码清单:信号量-3_。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-3 xQueueCreateMutex源码
+    :name: 代码清单:信号量-3
     :linenos:
-代码清单17‑3 xQueueCreateMutex源码
 
-1 #if( ( configUSE_MUTEXES == 1 ) && \\
+    #if( ( configUSE_MUTEXES == 1 ) &&			\
+        ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
 
-2 ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
+    QueueHandle_t xQueueCreateMutex( const uint8_t ucQueueType )
+    {
+        Queue_t *pxNewQueue;
+    const UBaseType_t uxMutexLength =( UBaseType_t ) 1,
+    uxMutexSize = ( UBaseType_t ) 0;
 
-3
+        pxNewQueue = ( Queue_t * ) xQueueGenericCreate(
+                        uxMutexLength,
+                        uxMutexSize,
+                        ucQueueType );			(1)
+        prvInitialiseMutex( pxNewQueue );			(2)
 
-4 QueueHandle_t xQueueCreateMutex( const uint8_t ucQueueType )
+    return pxNewQueue;
+    }
 
-5 {
-
-6 Queue_t \*pxNewQueue;
-
-7 const UBaseType_t uxMutexLength =( UBaseType_t ) 1,
-
-8 uxMutexSize = ( UBaseType_t ) 0;
-
-9
-
-10 pxNewQueue = ( Queue_t \* ) xQueueGenericCreate(
-
-11 uxMutexLength,
-
-12 uxMutexSize,
-
-13 ucQueueType ); **(1)**
-
-14 prvInitialiseMutex( pxNewQueue ); **(2)**
-
-15
-
-16 return pxNewQueue;
-
-17 }
 
 这个函数是带条件编译的，只有将宏configUSE_MUTEXES定义为1才会编译这个函数。
 
-代码清单17‑3\ **(1)**\ ：其实互斥量的创建也是调用xQueueGenericCreate()函数进行创建。
-uxQueueLength为1表示创建的队列长度为1，其实用作互斥量就表示互斥量的最大可用个数，从前面的知识点我
-们就知道，互斥量要么是开锁（有效），要么是闭锁（无效），长度为1不正是这样子的表示吗？同时
-uxMutexSize的值为0，表示创建的消息空间（队列项）大小为0，因为这个所谓的“消息队列”其实并不是用于存
-储消息的，而是被用作互斥量，因为我们根本无需关注消息内容是什么，只要知道互斥量是否有效即可， 
-ucQueueType表示的是创建队列的类型，在queue.h中有定义，具体见代码清单16‑4，现在创建的是互斥量，其
-类型就是queueQUEUE_TYPE_MUTEX，在前面的章节我们已经讲解了通用队列创建函数，在此就不重复赘述。
+-   代码清单:信号量-3_ **(1)**\ ：其实互斥量的创建也是调用xQueueGenericCreate()函数进行创建。
+    uxQueueLength为1表示创建的队列长度为1，其实用作互斥量就表示互斥量的最大可用个数，从前面的知识点我
+    们就知道，互斥量要么是开锁（有效），要么是闭锁（无效），长度为1不正是这样子的表示吗？同时
+    uxMutexSize的值为0，表示创建的消息空间（队列项）大小为0，因为这个所谓的“消息队列”其实并不是用于存
+    储消息的，而是被用作互斥量，因为我们根本无需关注消息内容是什么，只要知道互斥量是否有效即可， 
+    ucQueueType表示的是创建队列的类型，在queue.h中有定义，具体见代码清单16‑4，现在创建的是互斥量，其
+    类型就是queueQUEUE_TYPE_MUTEX，在前面的章节我们已经讲解了通用队列创建函数，在此就不重复赘述。
 
-代码清单17‑3\ **(2)**\ ：调用prvInitialiseMutex()函数进行初始胡互斥量，函数源码具体见代码清单17‑4。
+-   代码清单:信号量-3_ **(2)**\ ：调用prvInitialiseMutex()函数进行初始胡互斥量，函数源码具体见 代码清单:信号量-4_。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-4 prvInitialiseMutex()源码
+    :name: 代码清单:信号量-4
     :linenos:
-代码清单17‑4 prvInitialiseMutex()源码
 
-1 #define pxMutexHolder pcTail **(4)**
+    #define pxMutexHolder					pcTail	(4)
+    #define uxQueueType					pcHead
+    #define queueQUEUE_IS_MUTEX				NULL
 
-2 #define uxQueueType pcHead
+    #if( configUSE_MUTEXES == 1 )
 
-3 #define queueQUEUE_IS_MUTEX NULL
+    static void prvInitialiseMutex( Queue_t *pxNewQueue )
+    {
+    if ( pxNewQueue != NULL ) {
+            pxNewQueue->pxMutexHolder = NULL;			(1)
+            pxNewQueue->uxQueueType = queueQUEUE_IS_MUTEX;
 
-4
+            pxNewQueue->u.uxRecursiveCallCount = 0;			(2)
 
-5 #if( configUSE_MUTEXES == 1 )
+            traceCREATE_MUTEX( pxNewQueue );
 
-6
+            ( void ) xQueueGenericSend( pxNewQueue,
+                                        NULL,
+                                        ( TickType_t ) 0U,
+                                        queueSEND_TO_BACK );		(3)
+        } else {
+            traceCREATE_MUTEX_FAILED();
+        }
+    }
 
-7 static void prvInitialiseMutex( Queue_t \*pxNewQueue )
+    #endif
 
-8 {
 
-9 if ( pxNewQueue != NULL ) {
+-   代码清单:信号量-4_ **(1)**\ ：第一次看源码，是不是会感觉很奇怪，pxMutexHolder与uxQueueType这个成员
+    变量是从哪出来的？明明结构体中没有这个东西，其实，FreeRTOS为了代码的可读性，真的做了很多优化的工作，
+    在 代码清单:信号量-4_ **(4)**\ 中，我们可以看到，FreeRTOS用宏定义的方式来重新定义了结构体中的pcTail
+    与pcHead成员变量，更方便阅读。为什么要这样子呢？我们知道，pcTail与pcHead用于指向消息存储区域的，
+    但是如果队列用作互斥量，那么我们就无需理会消息存储区域了，因为都没有消息存储区域，但是互斥量有个很
+    重要的特性，那就是优先级继承机制，所有，我们要知道持有互斥量的任务是哪一个，因为只有持有互斥量的任
+    务才能得到互斥量的所有权，所以，pxMutexHolder就被用于指向持有互斥量的任务控制块，现在初始化的时候，
+    就初始化为NULL，表示没有任务持有互斥量。uxQueueType表示队列的类型，设置为
+    queueQUEUE_IS_MUTEX（NULL），表示的是用作互斥量。
 
-10 pxNewQueue->pxMutexHolder = NULL; **(1)**
+-   代码清单:信号量-4_ **(2)**\ ：如果是递归互斥量的话，还需要联合体成员变量u.uxRecursiveCallCount初始化一下。
 
-11 pxNewQueue->uxQueueType = queueQUEUE_IS_MUTEX;
-
-12
-
-13 pxNewQueue->u.uxRecursiveCallCount = 0; **(2)**
-
-14
-
-15 traceCREATE_MUTEX( pxNewQueue );
-
-16
-
-17 ( void ) xQueueGenericSend( pxNewQueue,
-
-18 NULL,
-
-19 ( TickType_t ) 0U,
-
-20 queueSEND_TO_BACK ); **(3)**
-
-21 } else {
-
-22 traceCREATE_MUTEX_FAILED();
-
-23 }
-
-24 }
-
-25
-
-26 #endif
-
-代码清单17‑4\ **(1)**\ ：第一次看源码，是不是会感觉很奇怪，pxMutexHolder与uxQueueType这个成员
-变量是从哪出来的？明明结构体中没有这个东西，其实，FreeRTOS为了代码的可读性，真的做了很多优化的工作
-，在代码清单17‑4\ **(4)**\ 中，我们可以看到，FreeRTOS用宏定义的方式来重新定义了结构体中的pcTail
-与pcHead成员变量，更方便阅读。为什么要这样子呢？我们知道，pcTail与pcHead用于指向消息存储区域的，
-但是如果队列用作互斥量，那么我们就无需理会消息存储区域了，因为都没有消息存储区域，但是互斥量有个很
-重要的特性，那就是优先级继承机制，所有，我们要知道持有互斥量的任务是哪一个，因为只有持有互斥量的任
-务才能得到互斥量的所有权，所以，pxMutexHolder就被用于指向持有互斥量的任务控制块，现在初始化的时候，
-就初始化为NULL，表示没有任务持有互斥量。uxQueueType表示队列的类型，设置为
-queueQUEUE_IS_MUTEX（NULL），表示的是用作互斥量。
-
-代码清单17‑4\ **(2)**\ ：如果是递归互斥量的话，还需要联合体成员变量u.uxRecursiveCallCount初始化一下。
-
-代码清单17‑4\ **(3)**\ ：调用xQueueGenericSend()函数释放互斥量，在创建成功的时候互斥量默认是有效的。
+-   代码清单:信号量-4_ **(3)**\ ：调用xQueueGenericSend()函数释放互斥量，在创建成功的时候互斥量默认是有效的。
 
 互斥量创建成功的示意图具体见图 互斥量创建完成示意图_。
 
@@ -399,36 +353,26 @@ queueQUEUE_IS_MUTEX（NULL），表示的是用作互斥量。
 
 
 xSemaphoreCreateMutex()函数使用是非常简单的，只不过需要用户自己定义一个互斥量的控制块指针，使用
-实例具体见代码清单17‑5加粗部分。
+实例具体见 代码清单:信号量-5_ 加粗部分。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-5xSemaphoreCreateMutex()函数使用实例
+    :emphasize-lines: 5-10
+    :name: 代码清单:信号量-5
     :linenos:
-代码清单17‑5xSemaphoreCreateMutex()函数使用实例
 
-1 SemaphoreHandle_t MuxSem_Handle;
+    SemaphoreHandle_t MuxSem_Handle;
 
-2
+    void vATask( void * pvParameters )
+    {
+    /* 创建一个互斥量 */
+        MuxSem_Handle= xSemaphoreCreateMutex();
 
-3 void vATask( void \* pvParameters )
+    if (MuxSem_Handle!= NULL ) {
+    /* 互斥量创建成功 */
+        }
+    }
 
-4 {
-
-**5 /\* 创建一个互斥量 \*/**
-
-**6 MuxSem_Handle= xSemaphoreCreateMutex();**
-
-**7**
-
-**8 if (MuxSem_Handle!= NULL ) {**
-
-**9 /\* 互斥量创建成功 \*/**
-
-**10 }**
-
-11 }
 
 递归互斥量创建函数xSemaphoreCreateRecursiveMutex()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -438,73 +382,57 @@ xSemaphoreCreateMutex()或xSemaphoreCreateMutexStatic()创建（我们只讲解�
 一个任务获取一次，如果同一个任务想再次获取则会失败。递归信号量则相反，它可以被同一个任务获取很多
 次，获取多少次就需要释放多少次。递归信号量与互斥量一样，都实现了优先级继承机制，可以减少优先级反转的反生。
 
-要想使用该函数必须在FreeRTOSConfig.h中把宏configSUPPORT_DYNAMIC_ALLOCATION 
+要想使用该函数必须在FreeRTOSConfig.h中把宏configSUPPORT_DYNAMIC_ALLOCATION
 和configUSE_RECURSIVE_MUTEXES均定义为1。宏configSUPPORT_DYNAMIC_ALLOCATION 定义为1即表示开启
 动态内存分配，其实该宏在FreeRTOS.h中默认定义为1，即所有FreeRTOS的对象在创建的时候都默认使用动态
-内存分配方案。该函数的具体说明见表17‑1，应用举例见
+内存分配方案。该函数的具体说明见表 xSemaphoreCreateRecursiveMutex函数说明_，应用举例见
 
 其实xSemaphoreCreateRecursiveMutex()实际调用的函数就是xQueueCreateMutex()函数，具体的创建过程
 也不再重复赘述，参考前一小节，下面来看看如何使用xSemaphoreCreateRecursiveMutex()函数，具体
-见代码清单17‑6加粗部分。代码清
-单17‑6。
-
-表17‑1xSemaphoreCreateRecursiveMutex()函数说明
+见 代码清单:信号量-6_ 加粗部分。
 
 .. list-table::
-   :widths: 33 33 33
+   :widths: 33 33
+   :name: xSemaphoreCreateRecursiveMutex函数说明
    :header-rows: 0
 
+   * - **函数原型**
+     - #if((configSUPPORT_DYNAMIC_ALLOCATION==1) && (configUSE_RECURSIVE_MUTEXES ==1))
+       #define xSemaphoreCreateRecursiveMutex() xQueueCreateMutex( queueQUEUE_TYPE_RECURSIVE_MUTEX )
+       #endif
 
-   * - **函数原型** | #i
-     - ((configSUPPORT_DYNAMIC_ALLOCATION==1) && | (configUSE_RECURSIVE_MUTEXES ==1))  #define xSemaphoreCreateRecursiveMutex() xQueueCreateMutex(
-       queueQUEUE_TYPE_RECURSIVE_MUTEX )  #endif
-     - |
+   * - **功能**
+     - 创建一个递归互斥量。
 
-   * - **功能**     |
-     - 建一个递归互斥量。                         |      |
-     -
+   * - **参数**
+     - void	无。 
 
-   * - **参数**     |
-     - oid                                         |
-     - 。 |
-
-   * - **返回值**   | 如
-     - | 果创建成功则返回一个递归互斥量句柄，用于访问 |      | 创建的递归互斥量。如果创建不成功则返回NULL。 |      |
-     - |
+   * - **返回值**
+     - 如果创建成功则返回一个递归互斥量句柄，用于访问创建的递归互斥量。如果创建不成功则返回NULL。
 
 
 其实xSemaphoreCreateRecursiveMutex()实际调用的函数就是xQueueCreateMutex()函数，具体的创建过
 程也不再重复赘述，参考前一小节，下面来看看如何使用xSemaphoreCreateRecursiveMutex()函数，具体
-见代码清单17‑6加粗部分。
+见 代码清单:信号量-6_ 加粗部分。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-6xSemaphoreCreateRecursiveMutex()函数使用实例
+    :emphasize-lines: 5-10
+    :name: 代码清单:信号量-6
     :linenos:
-代码清单17‑6xSemaphoreCreateRecursiveMutex()函数使用实例
 
-1 SemaphoreHandle_t xMutex;
+    SemaphoreHandle_t xMutex;
 
-2
+    void vATask( void * pvParameters )
+    {
+    /* 创建一个递归互斥量 */
+        xMutex = xSemaphoreCreateRecursiveMutex();
 
-3 void vATask( void \* pvParameters )
+    if ( xMutex != NULL ) {
+    /* 递归互斥量创建成功 */
+        }
+    }
 
-4 {
-
-**5 /\* 创建一个递归互斥量 \*/**
-
-**6 xMutex = xSemaphoreCreateRecursiveMutex();**
-
-**7**
-
-**8 if ( xMutex != NULL ) {**
-
-**9 /\* 递归互斥量创建成功 \*/**
-
-**10 }**
-
-11 }
 
 互斥量删除函数vSemaphoreDelete()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -520,325 +448,178 @@ xSemaphoreCreateMutex()或xSemaphoreCreateMutexStatic()创建（我们只讲解�
 斥量处于开锁状态，那么获取该互斥量的任务将成功获得该互斥量，并拥有互斥量的使用权；如果互斥量处于
 闭锁状态，获取该互斥量的任务将无法获得互斥量，任务将被挂起，在任务被挂起之前，会进行优先级继承，
 如果当前任务优先级比持有互斥量的任务优先级高，那么将会临时提升持有互斥量任务的优先级。互斥量的获
-取函数是一个宏定义，实际调用的函数就是xQueueGenericReceive()，具体见代码清单17‑7。
+取函数是一个宏定义，实际调用的函数就是xQueueGenericReceive()，具体见 代码清单:信号量-7_。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-7 xSemaphoreTake()函数原型
+    :name: 代码清单:信号量-7
     :linenos:
-代码清单17‑7 xSemaphoreTake()函数原型
 
-1 #define xSemaphoreTake( xSemaphore, xBlockTime ) \\
 
-2 xQueueGenericReceive(( QueueHandle_t ) ( xSemaphore ), \\
+    #define xSemaphoreTake( xSemaphore, xBlockTime )			\
+    xQueueGenericReceive(( QueueHandle_t ) ( xSemaphore ), 	\
+                    NULL, 				\
+                    (xBlockTime ),			\
+                    pdFALSE )
 
-3 NULL, \\
-
-4 (xBlockTime ), \\
-
-5 pdFALSE )
 
 xQueueGenericReceive()函数想必我们都不陌生，其实就是消息队列获取函数，只不过如果是使用了互斥量
 的时候，这个函数会稍微有点不一样，因为互斥量本身的优先级继承机制，所以，在这个函数里面会使用宏定
 义进行编译，如果获取的对象是互斥量，那么这个函数就拥有优先级继承算法，如果获取对象不是互斥量，就
-没有优先级继承机制，下面来看看xQueueGenericReceive源码，具体见代码清单17‑8加粗部分，其他地方的
+没有优先级继承机制，下面来看看xQueueGenericReceive源码，具体见 代码清单:信号量-8_ 加粗部分，其他地方的
 解释具体见15.6.5 3章节。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-8 xQueueGenericReceive源码（已删减）
+    :emphasize-lines: 34-45,95-109
+    :name: 代码清单:信号量-8
     :linenos:
-代码清单17‑8 xQueueGenericReceive源码（已删减）
 
-1 BaseType_t xQueueGenericReceive( QueueHandle_t xQueue,
+    BaseType_t xQueueGenericReceive( QueueHandle_t xQueue,
+    void * const pvBuffer,
+    TickType_t xTicksToWait,
+    const BaseType_t xJustPeeking )
+    {
+        BaseType_t xEntryTimeSet = pdFALSE;
+        TimeOut_t xTimeOut;
+        int8_t *pcOriginalReadPosition;
+        Queue_t * const pxQueue = ( Queue_t * ) xQueue;
+
+    /* 已删除一些断言 */
+
+    for ( ;; ) {
+            taskENTER_CRITICAL();
+            {
+    const UBaseType_t uxMessagesWaiting = pxQueue->uxMessagesWaiting;
+
+    /* 看看队列中有没有消息 */
+    if ( uxMessagesWaiting > ( UBaseType_t ) 0 ) {
+    /*防止仅仅是读取消息，而不进行消息出队操作*/
+                    pcOriginalReadPosition = pxQueue->u.pcReadFrom;
+
+    /* 拷贝消息到用户指定存放区域pvBuffer */
+                    prvCopyDataFromQueue( pxQueue, pvBuffer );
+
+    if ( xJustPeeking == pdFALSE ) {
+    /* 读取消息并且消息出队 */
+                        traceQUEUE_RECEIVE( pxQueue );
+
+    /* 获取了消息，当前消息队列的消息个数需要减一 */
+                        pxQueue->uxMessagesWaiting = uxMessagesWaiting - 1;
+
+    /* 如果系统支持使用互斥量 */
+    #if ( configUSE_MUTEXES == 1 )
+                        {
+    /* 如果队列类型是互斥量 */
+        if(pxQueue->uxQueueType == queueQUEUE_IS_MUTEX) {
+    /* 获取当前任务控制块 */		(1)
+                                pxQueue->pxMutexHolder =
+                                ( int8_t * )pvTaskIncrementMutexHeldCount();
+                            } else {
+                                mtCOVERAGE_TEST_MARKER();
+                            }
+                        }
+    #endif
+
+    /* 判断一下消息队列中是否有等待发送消息的任务 */
+    if ( listLIST_IS_EMPTY(
+    &( pxQueue->xTasksWaitingToSend ) ) == pdFALSE) {
+    /* 将任务从阻塞中恢复 */
+    if ( xTaskRemoveFromEventList(
+    &( pxQueue->xTasksWaitingToSend))!= pdFALSE ){
+    /* 如果被恢复的任务优先级比当前任务高，会进行一次任务切换 */
+                                queueYIELD_IF_USING_PREEMPTION();
+                            } else {
+                                mtCOVERAGE_TEST_MARKER();
+                            }
+                        } else {
+                            mtCOVERAGE_TEST_MARKER();
+                        }
+                    }
+
+                    taskEXIT_CRITICAL();
+    return pdPASS;
+                }
+    /* 消息队列中没有消息可读 */
+    else {
+    if ( xTicksToWait == ( TickType_t ) 0 ) {
+    /* 不等待，直接返回 */
+                        taskEXIT_CRITICAL();
+                        traceQUEUE_RECEIVE_FAILED( pxQueue );
+    return errQUEUE_EMPTY;
+                    } else if ( xEntryTimeSet == pdFALSE ) {
+    /* 初始化阻塞超时结构体变量，初始化进入
+    阻塞的时间xTickCount和溢出次数xNumOfOverflows */
+                        vTaskSetTimeOutState( &xTimeOut );
+                        xEntryTimeSet = pdTRUE;
+                    } else {
+                        mtCOVERAGE_TEST_MARKER();
+                    }
+                }
+            }
+            taskEXIT_CRITICAL();
+
+
+            vTaskSuspendAll();
+            prvLockQueue( pxQueue );
+
+    /* 检查超时时间是否已经过去了*/
+    if(xTaskCheckForTimeOut(&xTimeOut, &xTicksToWait) == pdFALSE ) {
+    /* 如果队列还是空的 */
+    if ( prvIsQueueEmpty( pxQueue ) != pdFALSE ) {
+                    traceBLOCKING_ON_QUEUE_RECEIVE( pxQueue );
+
+    /* 如果系统支持使用互斥量 */
+    #if ( configUSE_MUTEXES == 1 )
+                    {
+    /* 如果队列类型是互斥量 */
+    if ( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX ) {
+                            taskENTER_CRITICAL();
+                            {
+    /* 进行优先级继承 */
+    vTaskPriorityInherit((void*)pxQueue->pxMutexHolder);(2)
+                            }
+                            taskEXIT_CRITICAL();
+                        } else {
+                            mtCOVERAGE_TEST_MARKER();
+                        }
+                    }
+    #endif
+
+    /* 将当前任务添加到队列的等待接收列表中
+    以及阻塞延时列表，阻塞时间为用户指定的超时时间xTicksToWait */
+
+                    vTaskPlaceOnEventList(
+    &( pxQueue->xTasksWaitingToReceive ), xTicksToWait );
+                    prvUnlockQueue( pxQueue );
+    if ( xTaskResumeAll() == pdFALSE ) {
+    /* 如果有任务优先级比当前任务高，会进行一次任务切换 */
+                        portYIELD_WITHIN_API();
+                    } else {
+                        mtCOVERAGE_TEST_MARKER();
+                    }
+                } else {
+    /* 如果队列有消息了，就再试一次获取消息 */
+                    prvUnlockQueue( pxQueue );
+                    ( void ) xTaskResumeAll();
+                }
+            } else {
+    /* 超时时间已过，退出 */
+                prvUnlockQueue( pxQueue );
+                ( void ) xTaskResumeAll();
+
+    if ( prvIsQueueEmpty( pxQueue ) != pdFALSE ) {
+    /* 如果队列还是空的，返回错误代码errQUEUE_EMPTY */
+                    traceQUEUE_RECEIVE_FAILED( pxQueue );
+    return errQUEUE_EMPTY;
+                } else {
+                    mtCOVERAGE_TEST_MARKER();
+                }
+            }
+        }
+    }
+    /*-----------------------------------------------------------*/
 
-2 void \* const pvBuffer,
-
-3 TickType_t xTicksToWait,
-
-4 const BaseType_t xJustPeeking )
-
-5 {
-
-6 BaseType_t xEntryTimeSet = pdFALSE;
-
-7 TimeOut_t xTimeOut;
-
-8 int8_t \*pcOriginalReadPosition;
-
-9 Queue_t \* const pxQueue = ( Queue_t \* ) xQueue;
-
-10
-
-11 /\* 已删除一些断言 \*/
-
-12
-
-13 for ( ;; ) {
-
-14 taskENTER_CRITICAL();
-
-15 {
-
-16 const UBaseType_t uxMessagesWaiting = pxQueue->uxMessagesWaiting;
-
-17
-
-18 /\* 看看队列中有没有消息 \*/
-
-19 if ( uxMessagesWaiting > ( UBaseType_t ) 0 ) {
-
-20 /*防止仅仅是读取消息，而不进行消息出队操作*/
-
-21 pcOriginalReadPosition = pxQueue->u.pcReadFrom;
-
-22
-
-23 /\* 拷贝消息到用户指定存放区域pvBuffer \*/
-
-24 prvCopyDataFromQueue( pxQueue, pvBuffer );
-
-25
-
-26 if ( xJustPeeking == pdFALSE ) {
-
-27 /\* 读取消息并且消息出队 \*/
-
-28 traceQUEUE_RECEIVE( pxQueue );
-
-29
-
-30 /\* 获取了消息，当前消息队列的消息个数需要减一 \*/
-
-31 pxQueue->uxMessagesWaiting = uxMessagesWaiting - 1;
-
-32
-
-33 /\* 如果系统支持使用互斥量 \*/
-
-**34 #if ( configUSE_MUTEXES == 1 )**
-
-**35 {**
-
-**36 /\* 如果队列类型是互斥量 \*/**
-
-**37 if(pxQueue->uxQueueType == queueQUEUE_IS_MUTEX) {**
-
-**38 /\* 获取当前任务控制块 \*/ (1)**
-
-**39 pxQueue->pxMutexHolder =**
-
-**40 ( int8_t \* )pvTaskIncrementMutexHeldCount();**
-
-**41 } else {**
-
-**42 mtCOVERAGE_TEST_MARKER();**
-
-**43 }**
-
-**44 }**
-
-**45 #endif**
-
-46
-
-47 /\* 判断一下消息队列中是否有等待发送消息的任务 \*/
-
-48 if ( listLIST_IS_EMPTY(
-
-49 &( pxQueue->xTasksWaitingToSend ) ) == pdFALSE) {
-
-50 /\* 将任务从阻塞中恢复 \*/
-
-51 if ( xTaskRemoveFromEventList(
-
-52 &( pxQueue->xTasksWaitingToSend))!= pdFALSE ){
-
-53 /\* 如果被恢复的任务优先级比当前任务高，会进行一次任务切换 \*/
-
-54 queueYIELD_IF_USING_PREEMPTION();
-
-55 } else {
-
-56 mtCOVERAGE_TEST_MARKER();
-
-57 }
-
-58 } else {
-
-59 mtCOVERAGE_TEST_MARKER();
-
-60 }
-
-61 }
-
-62
-
-63 taskEXIT_CRITICAL();
-
-64 return pdPASS;
-
-65 }
-
-66 /\* 消息队列中没有消息可读 \*/
-
-67 else {
-
-68 if ( xTicksToWait == ( TickType_t ) 0 ) {
-
-69 /\* 不等待，直接返回 \*/
-
-70 taskEXIT_CRITICAL();
-
-71 traceQUEUE_RECEIVE_FAILED( pxQueue );
-
-72 return errQUEUE_EMPTY;
-
-73 } else if ( xEntryTimeSet == pdFALSE ) {
-
-74 /\* 初始化阻塞超时结构体变量，初始化进入
-
-75 阻塞的时间xTickCount和溢出次数xNumOfOverflows \*/
-
-76 vTaskSetTimeOutState( &xTimeOut );
-
-77 xEntryTimeSet = pdTRUE;
-
-78 } else {
-
-79 mtCOVERAGE_TEST_MARKER();
-
-80 }
-
-81 }
-
-82 }
-
-83 taskEXIT_CRITICAL();
-
-84
-
-85
-
-86 vTaskSuspendAll();
-
-87 prvLockQueue( pxQueue );
-
-88
-
-89 /\* 检查超时时间是否已经过去了*/
-
-90 if(xTaskCheckForTimeOut(&xTimeOut, &xTicksToWait) == pdFALSE ) {
-
-91 /\* 如果队列还是空的 \*/
-
-92 if ( prvIsQueueEmpty( pxQueue ) != pdFALSE ) {
-
-93 traceBLOCKING_ON_QUEUE_RECEIVE( pxQueue );
-
-94
-
-**95 /\* 如果系统支持使用互斥量 \*/**
-
-**96 #if ( configUSE_MUTEXES == 1 )**
-
-**97 {**
-
-**98 /\* 如果队列类型是互斥量 \*/**
-
-**99 if ( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX ) {**
-
-**100 taskENTER_CRITICAL();**
-
-**101 {**
-
-**102 /\* 进行优先级继承 \*/**
-
-**103 vTaskPriorityInherit((void*)pxQueue->pxMutexHolder);(2)**
-
-**104 }**
-
-**105 taskEXIT_CRITICAL();**
-
-**106 } else {**
-
-**107 mtCOVERAGE_TEST_MARKER();**
-
-**108 }**
-
-**109 }**
-
-**110 #endif**
-
-111
-
-112 /\* 将当前任务添加到队列的等待接收列表中
-
-113 以及阻塞延时列表，阻塞时间为用户指定的超时时间xTicksToWait \*/
-
-114
-
-115 vTaskPlaceOnEventList(
-
-116 &( pxQueue->xTasksWaitingToReceive ), xTicksToWait );
-
-117 prvUnlockQueue( pxQueue );
-
-118 if ( xTaskResumeAll() == pdFALSE ) {
-
-119 /\* 如果有任务优先级比当前任务高，会进行一次任务切换 \*/
-
-120 portYIELD_WITHIN_API();
-
-121 } else {
-
-122 mtCOVERAGE_TEST_MARKER();
-
-123 }
-
-124 } else {
-
-125 /\* 如果队列有消息了，就再试一次获取消息 \*/
-
-126 prvUnlockQueue( pxQueue );
-
-127 ( void ) xTaskResumeAll();
-
-128 }
-
-129 } else {
-
-130 /\* 超时时间已过，退出 \*/
-
-131 prvUnlockQueue( pxQueue );
-
-132 ( void ) xTaskResumeAll();
-
-133
-
-134 if ( prvIsQueueEmpty( pxQueue ) != pdFALSE ) {
-
-135 /\* 如果队列还是空的，返回错误代码errQUEUE_EMPTY \*/
-
-136 traceQUEUE_RECEIVE_FAILED( pxQueue );
-
-137 return errQUEUE_EMPTY;
-
-138 } else {
-
-139 mtCOVERAGE_TEST_MARKER();
-
-140 }
-
-141 }
-
-142 }
-
-143 }
-
-144 /*-----------------------------------------------------------*/
 
 对于获取互斥量过程，因为与操作队列消息队列没啥差别，我们可以将其简化一下，但是有一些地方要注意一
 点，过程简化后具体如下：
@@ -853,192 +634,122 @@ xQueueGenericReceive()函数想必我们都不陌生，其实就是消息队列�
 时列表之前，会判断当前任务和拥有互斥量的任务优先级哪个更高，如果当前任务优先级高，则拥有互斥量的
 任务继承当前任务优先级，也就是我们说的优先级继承机制。
 
-代码清单17‑8\ **(1)**\ ：如果互斥量是有效的，获取成功后结构体成员变量pxMutexHolder指向当前任务
-控制块。pvTaskIncrementMutexHeldCount()函数做了两件事，把当前任务控制块的成员变量uxMutexesHeld
-加1，表示当前任务持有的互斥量数量，然后返回指向当前任务控制块的指针pxCurrentTCB。
+-   代码清单:信号量-8_ **(1)**\ ：如果互斥量是有效的，获取成功后结构体成员变量pxMutexHolder指向当前任务
+    控制块。pvTaskIncrementMutexHeldCount()函数做了两件事，把当前任务控制块的成员变量uxMutexesHeld
+    加1，表示当前任务持有的互斥量数量，然后返回指向当前任务控制块的指针pxCurrentTCB。
 
-代码清单17‑8\ **(2)**\ ：如果互斥量是无效状态，当前任务是无法获取到互斥量的，并且用户指定了阻塞
-时间，那么在当前任务进入阻塞的时候，需要进行优先级继承。而vTaskPriorityInherit()函数就是进行优
-先级继承操作，源码具体见代码清单17‑9。
+-   代码清单:信号量-8_ **(2)**\ ：如果互斥量是无效状态，当前任务是无法获取到互斥量的，并且用户指定了阻塞
+    时间，那么在当前任务进入阻塞的时候，需要进行优先级继承。而vTaskPriorityInherit()函数就是进行优
+    先级继承操作，源码具体见 代码清单:信号量-9_。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-9 vTaskPriorityInherit()函数源码
+    :name: 代码清单:信号量-9
     :linenos:
-代码清单17‑9 vTaskPriorityInherit()函数源码
 
-1 #if ( configUSE_MUTEXES == 1 )
+    #if ( configUSE_MUTEXES == 1 )
 
-2
+    void vTaskPriorityInherit( TaskHandle_t const pxMutexHolder )
+    {
+        TCB_t * const pxTCB = ( TCB_t * ) pxMutexHolder;		(1)
 
-3 void vTaskPriorityInherit( TaskHandle_t const pxMutexHolder )
+    if ( pxMutexHolder != NULL ) {
+    /* 判断当前任务与持有互斥量任务的优先级 */
+    if ( pxTCB->uxPriority < pxCurrentTCB->uxPriority ) {	(2)
+    if ( ( listGET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ) )
+    & taskEVENT_LIST_ITEM_VALUE_IN_USE ) == 0UL ) {
+    /* 调整互斥锁持有者等待的事件列表项的优先级 */
+                    listSET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ),
+                            ( TickType_t ) configMAX_PRIORITIES -
+    ( TickType_t ) pxCurrentTCB->uxPriority );(3)
+                } else {
+                    mtCOVERAGE_TEST_MARKER();
+                }
 
-4 {
+    /* 如果被提升优先级的任务处于就绪列表中 */
+    if (listIS_CONTAINED_WITHIN( &( pxReadyTasksLists[ pxTCB->uxPriority ] ),
+    &( pxTCB->xStateListItem ) ) != pdFALSE ) {(4)
+    /* 先将任务从就绪列表中移除 */
+    if ( uxListRemove( &( pxTCB->xStateListItem ) ) == ( UBaseType_t ) 0 ) {
+                        taskRESET_READY_PRIORITY( pxTCB->uxPriority );(5)
+                    } else {
+                        mtCOVERAGE_TEST_MARKER();
+                    }
+    /* 暂时提升持有互斥量任务的优先级，提升到与当前任务优先级一致*/
+                    pxTCB->uxPriority = pxCurrentTCB->uxPriority;	(6)
 
-5 TCB_t \* const pxTCB = ( TCB_t \* ) pxMutexHolder; **(1)**
+    /* 再插入就绪列表中 */
+                    prvAddTaskToReadyList( pxTCB );			(7)
+                } else {
+    /* 如果任务不是在就绪列表中，就仅仅是提升任务优先级即可 */
+                    pxTCB->uxPriority = pxCurrentTCB->uxPriority;	(8)
+                }
 
-6
+                traceTASK_PRIORITY_INHERIT( pxTCB, pxCurrentTCB->uxPriority );
+            } else {
+                mtCOVERAGE_TEST_MARKER();
+            }
+        } else {
+            mtCOVERAGE_TEST_MARKER();
+        }
+    }
 
-7
+    #endif/* configUSE_MUTEXES */
+    /*-----------------------------------------------------------*/
 
-8 if ( pxMutexHolder != NULL ) {
 
-9 /\* 判断当前任务与持有互斥量任务的优先级 \*/
+-   代码清单:信号量-9_ **(1)**\ ：获取持互斥量的任务控制块。
 
-10 if ( pxTCB->uxPriority < pxCurrentTCB->uxPriority ) { **(2)**
+-   代码清单:信号量-9_ **(2)**\ ：判断当前任务与持有互斥量任务的优先级，如果当前任务比持有互斥量任务的
+    优先级高，那么需要进行优先级继承。
 
-11 if ( ( listGET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ) )
+-   代码清单:信号量-9_ **(3)**\ ：如果持有互斥量的任务在等待事件列表中，就调整互斥锁持有者等待的事件列
+    表项的优先级，因为待会会暂时修改持有互斥量任务的优先级。
 
-12 & taskEVENT_LIST_ITEM_VALUE_IN_USE ) == 0UL ) {
+-   代码清单:信号量-9_ **(4)**\ ：如果被提升优先级的任务处于就绪列表中，就要麻烦一点，因为如果修改了任
+    务的优先级，那么在就绪列表中的任务也要重新排序。
 
-13 /\* 调整互斥锁持有者等待的事件列表项的优先级 \*/
+-   代码清单:信号量-9_ **(5)**\ ：先将任务从就绪列表中移除，待优先级继承完毕就重新插入就绪列表中。
 
-14 listSET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ),
+-   代码清单:信号量-9_ **(6)**\ ：修改持有互斥量任务的优先级，暂时提升到与当前任务优先级一致。
 
-15 ( TickType_t ) configMAX_PRIORITIES -
+-   代码清单:信号量-9_ **(7)**\ ：调用prvAddTaskToReadyList()函数将已经修改的任务优先级重新插入就绪
+    列表，插入就绪列表会重新按照优先级进行排序。
 
-16 ( TickType_t ) pxCurrentTCB->uxPriority );\ **(3)**
-
-17 } else {
-
-18 mtCOVERAGE_TEST_MARKER();
-
-19 }
-
-20
-
-21 /\* 如果被提升优先级的任务处于就绪列表中 \*/
-
-22 if (listIS_CONTAINED_WITHIN( &( pxReadyTasksLists[ pxTCB->uxPriority ] ),
-
-23 &( pxTCB->xStateListItem ) ) != pdFALSE ) {**(4)**
-
-24 /\* 先将任务从就绪列表中移除 \*/
-
-25 if ( uxListRemove( &( pxTCB->xStateListItem ) ) == ( UBaseType_t ) 0 ) {
-
-26 taskRESET_READY_PRIORITY( pxTCB->uxPriority );\ **(5)**
-
-27 } else {
-
-28 mtCOVERAGE_TEST_MARKER();
-
-29 }
-
-30 /\* 暂时提升持有互斥量任务的优先级，提升到与当前任务优先级一致*/
-
-31 pxTCB->uxPriority = pxCurrentTCB->uxPriority; **(6)**
-
-32
-
-33 /\* 再插入就绪列表中 \*/
-
-34 prvAddTaskToReadyList( pxTCB ); **(7)**
-
-35 } else {
-
-36 /\* 如果任务不是在就绪列表中，就仅仅是提升任务优先级即可 \*/
-
-37 pxTCB->uxPriority = pxCurrentTCB->uxPriority; **(8)**
-
-38 }
-
-39
-
-40 traceTASK_PRIORITY_INHERIT( pxTCB, pxCurrentTCB->uxPriority );
-
-41 } else {
-
-42 mtCOVERAGE_TEST_MARKER();
-
-43 }
-
-44 } else {
-
-45 mtCOVERAGE_TEST_MARKER();
-
-46 }
-
-47 }
-
-48
-
-49 #endif/\* configUSE_MUTEXES \*/
-
-50 /*-----------------------------------------------------------*/
-
-代码清单17‑9\ **(1)**\ ：获取持互斥量的任务控制块。
-
-代码清单17‑9\ **(2)**\ ：判断当前任务与持有互斥量任务的优先级，如果当前任务比持有互斥量任务的
-优先级高，那么需要进行优先级继承。
-
-代码清单17‑9\ **(3)**\ ：如果持有互斥量的任务在等待事件列表中，就调整互斥锁持有者等待的事件列
-表项的优先级，因为待会会暂时修改持有互斥量任务的优先级。
-
-代码清单17‑9\ **(4)**\ ：如果被提升优先级的任务处于就绪列表中，就要麻烦一点，因为如果修改了任
-务的优先级，那么在就绪列表中的任务也要重新排序。
-
-代码清单17‑9\ **(5)**\ ：先将任务从就绪列表中移除，待优先级继承完毕就重新插入就绪列表中。
-
-代码清单17‑9\ **(6)**\ ：修改持有互斥量任务的优先级，暂时提升到与当前任务优先级一致。
-
-代码清单17‑9\ **(7)**\ ：调用prvAddTaskToReadyList()函数将已经修改的任务优先级重新插入就绪
-列表，插入就绪列表会重新按照优先级进行排序。
-
-代码清单17‑9\ **(8)**\ ：如果持有互斥量的任务不是在就绪列表中，就仅仅是提升任务优先级即可。
+-   代码清单:信号量-9_ **(8)**\ ：如果持有互斥量的任务不是在就绪列表中，就仅仅是提升任务优先级即可。
 
 至此，获取互斥量的操作就完成了，如果任务获取互斥量成功，那么在使用完毕需要立即释放，否则很容易
 造成其他任务无法获取互斥量，因为互斥量的优先级继承机制是只能将优先级危害降低，而不能完全消除。
 同时还需注意的是，互斥量是不允许在中断中操作的，因为优先级继承机制在中断是无意义的，互斥量获取
-函数的使用实例具体见代码清单17‑10加粗部分。
+函数的使用实例具体见 代码清单:信号量-10_ 加粗部分。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-10 xSemaphoreTake()函数使用实例
+    :emphasize-lines: 6-8
+    :name: 代码清单:信号量-10
     :linenos:
-代码清单17‑10 xSemaphoreTake()函数使用实例
 
-1 static void HighPriority_Task(void\* parameter)
+    static void HighPriority_Task(void* parameter)
+    {
+        BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdTRUE */
+    while (1) {
+            printf("HighPriority_Task 获取信号量\n");
+    //获取互斥量 MuxSem,没获取到则一直等待
+            xReturn = xSemaphoreTake(MuxSem_Handle,/* 互斥量句柄 */
+                                    portMAX_DELAY); /* 等待时间 */
+    if (pdTRUE == xReturn)
+                printf("HighPriority_Task Runing\n");
+            LED1_TOGGLE;
+            //处理临界资源
 
-2 {
+    printf("HighPriority_Task 释放信号量!\r\n");
 
-3 BaseType_t xReturn = pdTRUE;/\* 定义一个创建信息返回值，默认为pdTRUE \*/
+    xSemaphoreGive( MuxSem_Handle );//释放互斥量
 
-4 while (1) {
+            vTaskDelay(1000);
+        }
+    }
 
-5 printf("HighPriority_Task 获取信号量\n");
-
-**6 //获取互斥量 MuxSem,没获取到则一直等待**
-
-**7 xReturn = xSemaphoreTake(MuxSem_Handle,/\* 互斥量句柄 \*/**
-
-**8 portMAX_DELAY); /\* 等待时间 \*/**
-
-9 if (pdTRUE == xReturn)
-
-10 printf("HighPriority_Task Runing\n");
-
-11 LED1_TOGGLE;
-
-12 //处理临界资源
-
-13
-
-14 printf("HighPriority_Task 释放信号量!\r\n");
-
-15
-
-16 xSemaphoreGive( MuxSem_Handle );//释放互斥量
-
-17
-
-18 vTaskDelay(1000);
-
-19 }
-
-20 }
 
 递归互斥量获取函数xSemaphoreTakeRecursive()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1048,213 +759,135 @@ xSemaphoreTakeRecursive()也是一个宏定义，它最终使用现有的队列�
 xQueueTakeMutexRecursive()。互斥量之前必须由xSemaphoreCreateRecursiveMutex()这个
 函数创建。要注意的是该函数不能用于获取由函数xSemaphoreCreateMutex()创建的互斥量。要
 想使用该函数必须在头文件FreeRTOSConfig.h中把宏configUSE_RECURSIVE_MUTEXES定义为1。
-该函数的具体说明见表17‑2，应用举例见代码清单17‑12。
-
-表17‑2xSemaphoreTakeRecursive()函数说明
+该函数的具体说明见表 xSemaphoreTakeRecursive函数说明_，应用举例见 代码清单:信号量-12_。
 
 .. list-table::
-   :widths: 33 33 33
+   :widths: 33 33
+   :name: xSemaphoreTakeRecursive函数说明
    :header-rows: 0
 
+   * - **函数原型**
+     - #if( configUSE_RECURSIVE_MUTEXES == 1 )
+       #define xSemaphoreTakeRecursive( xMutex, xBlockTime )	xQueueTakeMutexRecursive( ( xMutex ), ( xBlockTime ) )
+       #endif
 
-   * - **函数原型** | #i
-     - (                     | con figUSE_RECURSIVE_MUTEXES == 1 )  #define xSemaphoreTakeRecursive( xMutex, xBlockTime ) x QueueTakeMutexRecursive( ( xMutex
-       ), ( xBlockTime ) )  #endif
-     - |
 
-   * - **功能**     |
-     - 取递归互斥量。         |
-     - |
+   * - **功能**
+     - 获取递归互斥量。
 
-   * - **参数**     |
-     - Mutex                   |
-     - 号量句柄。             |
+   * - **参数**
+     - xMutex	信号量句柄。
 
    * -
-     - xBlockTime
-     - 如果不是持               | 有互斥量的任务去获取无效 | 的互斥量，那
+     - xBlockTime	如果不是持有互斥量的任务去获取无效的互斥量，那么任务将进行等待用户指定超时时间，单位为tick（即系统节拍周期）。如果宏 INCLUDE_vTaskSuspend定义为1且形参xTicksToWait设置为portMAX_DELAY ，则任务将一直阻塞在该递归互斥量上（即没有超时时间）。
 
-   * - **返回值**   | 获
-     - 成功则返回pdTR       | UE，在超时之前没有获取成 | 功则返回errQUEUE_EMPTY。 |
-     - |
-
-            |
+   * - **返回值**
+     - 获取成功则返回pdTRUE，在超时之前没有获取成功则返回errQUEUE_EMPTY。
 
 
-下面来看看获取递归互斥量的实现过程，具体见代码清单17‑11。
+下面来看看获取递归互斥量的实现过程，具体见 代码清单:信号量-11_。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-11xQueueTakeMutexRecursive源码
+    :name: 代码清单:信号量-11
     :linenos:
-代码清单17‑11xQueueTakeMutexRecursive源码
 
-1 #if ( configUSE_RECURSIVE_MUTEXES == 1 )
+    #if ( configUSE_RECURSIVE_MUTEXES == 1 )
 
-2
+    BaseType_t xQueueTakeMutexRecursive( QueueHandle_t xMutex,
+                                        TickType_t xTicksToWait )
+    {
+        BaseType_t xReturn;
+        Queue_t * const pxMutex = ( Queue_t * ) xMutex;	
 
-3 BaseType_t xQueueTakeMutexRecursive( QueueHandle_t xMutex,
+        configASSERT( pxMutex );
 
-4 TickType_t xTicksToWait )
+        traceTAKE_MUTEX_RECURSIVE( pxMutex );
 
-5 {
+    /* 如果持有互斥量的任务就是当前任务 */
+    if ( pxMutex->pxMutexHolder == ( void * ) xTaskGetCurrentTaskHandle()){(1)
 
-6 BaseType_t xReturn;
+    /* u.uxRecursiveCallCount自加，表示调用了多少次递归互斥量获取 */
+            ( pxMutex->u.uxRecursiveCallCount )++;
+            xReturn = pdPASS;
+        } else {
+    /* 如果持有递归互斥量的任务不是当前任务，就只能等待递归互斥量被释放 */
+            xReturn = xQueueGenericReceive( pxMutex, NULL, xTicksToWait, pdFALSE );(2)
 
-7 Queue_t \* const pxMutex = ( Queue_t \* ) xMutex;
+    if ( xReturn != pdFAIL ) {
+    /* 获取递归互斥量成功，记录递归互斥量的获取次数 */
+                ( pxMutex->u.uxRecursiveCallCount )++;		(3)
+            } else {
+                traceTAKE_MUTEX_RECURSIVE_FAILED( pxMutex );
+            }
+        }
 
-8
+    return xReturn;
+    }
 
-9 configASSERT( pxMutex );
+    #endif
 
-10
 
-11 traceTAKE_MUTEX_RECURSIVE( pxMutex );
+-   代码清单:信号量-11_ **(1)**\ ：判断一下持有递归互斥量的任务是不是当前要获取的任务，如果是，则只需
+    要将结构体中u.uxRecursiveCallCount成员变量自加，表示该任务调用了多少次递归互斥量获取即可，然
+    后返回pdPASS，这样子就无需理会用户指定的超时时间了，效率就会很高。
 
-12
+-   代码清单:信号量-11_ **(2)**\
+    ：如果不是同一个任务去获取递归互斥量，那么按照互斥量的性质，当递归互斥量有效的时候才能被获取成
+    功。如果此时有任务持有该递归互斥量，那么当前获取递归互斥量的任务就会进入阻塞等待，阻塞超时时间
+    xTicksToWait由用户指定，这其实就是消息队列的出队操作，前面的章节已经详细讲解，就不再重复赘述。
 
-13 /\* 如果持有互斥量的任务就是当前任务 \*/
-
-14 if ( pxMutex->pxMutexHolder == ( void \* ) xTaskGetCurrentTaskHandle()){**(1)**
-
-15
-
-16 /\* u.uxRecursiveCallCount自加，表示调用了多少次递归互斥量获取 \*/
-
-17 ( pxMutex->u.uxRecursiveCallCount )++;
-
-18 xReturn = pdPASS;
-
-19 } else {
-
-20 /\* 如果持有递归互斥量的任务不是当前任务，就只能等待递归互斥量被释放 \*/
-
-21 xReturn = xQueueGenericReceive( pxMutex, NULL, xTicksToWait, pdFALSE );\ **(2)**
-
-22
-
-23 if ( xReturn != pdFAIL ) {
-
-24 /\* 获取递归互斥量成功，记录递归互斥量的获取次数 \*/
-
-25 ( pxMutex->u.uxRecursiveCallCount )++; **(3)**
-
-26 } else {
-
-27 traceTAKE_MUTEX_RECURSIVE_FAILED( pxMutex );
-
-28 }
-
-29 }
-
-30
-
-31 return xReturn;
-
-32 }
-
-33
-
-34 #endif
-
-代码清单17‑11\ **(1)**\ ：判断一下持有递归互斥量的任务是不是当前要获取的任务，如果是，则只需
-要将结构体中u.uxRecursiveCallCount成员变量自加，表示该任务调用了多少次递归互斥量获取即可，然
-后返回pdPASS，这样子就无需理会用户指定的超时时间了，效率就会很高。
-
-代码清单17‑11\ **(2)**\
-：如果不是同一个任务去获取递归互斥量，那么按照互斥量的性质，当递归互斥量有效的时候才能被获取成
-功。如果此时有任务持有该递归互斥量，那么当前获取递归互斥量的任务就会进入阻塞等待，阻塞超时时间
-xTicksToWait由用户指定，这其实就是消息队列的出队操作，前面的章节已经详细讲解，就不再重复赘述。
-
-代码清单17‑11\ **(3)**\ ：当任务获取递归互斥量成功，就需要把结构体中u.uxRecursiveCallCount
-成员变量加1，记录递归互斥量的获取次数，并且返回获取成功。
+-   代码清单:信号量-11_ **(3)**\ ：当任务获取递归互斥量成功，就需要把结构体中u.uxRecursiveCallCount
+    成员变量加1，记录递归互斥量的获取次数，并且返回获取成功。
 
 递归互斥量可以在一个任务中多次获取，当第一次获取递归互斥量时，队列结构体成员指针pxMutexHolder
 指向获取递归互斥量的任务控制块，当任务再次尝试获取这个递归互斥量时，如果任务就是拥有递归互斥量
 所有权的任务，那么只需要将记录获取递归次数的成员变量u.uxRecursiveCallCount加1即可，不需要再
-操作队列，下面看看xSemaphoreTakeRecursive()函数的使用实例，具体见代码清单17‑12加粗部分。
+操作队列，下面看看xSemaphoreTakeRecursive()函数的使用实例，具体见 代码清单:信号量-12_ 加粗部分。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-12xSemaphoreTakeRecursive()函数使用实例
+    :emphasize-lines: 16-24
+    :name: 代码清单:信号量-12
     :linenos:
-代码清单17‑12xSemaphoreTakeRecursive()函数使用实例
 
-1 SemaphoreHandle_t xMutex = NULL;
+    SemaphoreHandle_t xMutex = NULL;
 
-2
+    /* 创建信号量的任务 */
+    void vATask( void * pvParameters )
+    {
+    /* 创建一个递归互斥量，保护共享资源 */
+        xMutex = xSemaphoreCreateRecursiveMutex();
+    }
 
-3 /\* 创建信号量的任务 \*/
+    /* 使用互斥量 */
+    void vAnotherTask( void * pvParameters )
+    {
+    /* ... 做其他的事情 */
 
-4 void vATask( void \* pvParameters )
+    if ( xMutex != NULL ) {
+    /* 尝试获取递归信号量。
+    如果信号量不可用则等待10个ticks */
+    if(xSemaphoreTakeRecursive(xMutex,( TickType_t)10)==pdTRUE ) {
+    /* 获取到递归信号量，可以访问共享资源 */
+    /* ... 其他功能代码 */
 
-5 {
+    /* 重复获取递归信号量 */
+                xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 );
+                xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 );
 
-6 /\* 创建一个递归互斥量，保护共享资源 \*/
+    /* 释放递归信号量，获取了多少次就要释放多少次 */
+                xSemaphoreGiveRecursive( xMutex );
+                xSemaphoreGiveRecursive( xMutex );
+                xSemaphoreGiveRecursive( xMutex );
 
-7 xMutex = xSemaphoreCreateRecursiveMutex();
+    /* 现在递归互斥量可以被其他任务获取 */
+            } else {
+    /* 没能成功获取互斥量，所以不能安全的访问共享资源 */
+            }
+        }
+    }
 
-8 }
-
-9
-
-10 /\* 使用互斥量 \*/
-
-11 void vAnotherTask( void \* pvParameters )
-
-12 {
-
-13 /\* ...
-做其他的事情 \*/
-
-14
-
-15 if ( xMutex != NULL ) {
-
-**16 /\* 尝试获取递归信号量。**
-
-**17 如果信号量不可用则等待10个ticks \*/**
-
-**18 if(xSemaphoreTakeRecursive(xMutex,( TickType_t)10)==pdTRUE ) {**
-
-**19** **/\* 获取到递归信号量，可以访问共享资源 \*/**
-
-**20 /\* ...
-其他功能代码 \*/**
-
-**21**
-
-**22** **/\* 重复获取递归信号量 \*/**
-
-**23 xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 );**
-
-**24 xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 );**
-
-25
-
-26 /\* 释放递归信号量，获取了多少次就要释放多少次 \*/
-
-27 xSemaphoreGiveRecursive( xMutex );
-
-28 xSemaphoreGiveRecursive( xMutex );
-
-29 xSemaphoreGiveRecursive( xMutex );
-
-30
-
-31 /\* 现在递归互斥量可以被其他任务获取 \*/
-
-32 } else {
-
-33 /\* 没能成功获取互斥量，所以不能安全的访问共享资源 \*/
-
-34 }
-
-35 }
-
-36 }
 
 互斥量释放函数xSemaphoreGive()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1268,198 +901,127 @@ xTicksToWait由用户指定，这其实就是消息队列的出队操作，前�
 
 使用该函数接口时，只有已持有互斥量所有权的任务才能释放它，当任务调用xSemaphoreGive()函数时
 会将互斥量变为开锁状态，等待获取该互斥量的任务将被唤醒。如果任务的优先级被互斥量的优先级翻转
-机制临时提升，那么当互斥量被释放后，任务的优先级将恢复为原本设定的优先级，具体见代码清单17‑13。
+机制临时提升，那么当互斥量被释放后，任务的优先级将恢复为原本设定的优先级，具体见 代码清单:信号量-13_。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-13xSemaphoreGive()函数原型
+    :name: 代码清单:信号量-13
     :linenos:
-代码清单17‑13xSemaphoreGive()函数原型
 
-1 #define xSemaphoreGive( xSemaphore ) \\
+    #define xSemaphoreGive( xSemaphore )				\
+            xQueueGenericSend( ( QueueHandle_t ) ( xSemaphore ),	\
+                    NULL, 				\
+                    semGIVE_BLOCK_TIME,		\
+                    queueSEND_TO_BACK )
 
-2 xQueueGenericSend( ( QueueHandle_t ) ( xSemaphore ), \\
-
-3 NULL, \\
-
-4 semGIVE_BLOCK_TIME, \\
-
-5 queueSEND_TO_BACK )
 
 我们知道互斥量、信号量的释放就是调用xQueueGenericSend()函数，但是互斥量的处理还是有一些不一
 样的地方，因为它有优先级继承机制，在释放互斥量的时候我们需要恢复任务的初始优先级，所以，下面
 我们来看看具体在哪恢复任务的优先级，其实就是prvCopyDataToQueue()这个函数，该函数在
-xQueueGenericSend()中被调用，源码具体见代码清单17‑14。
+xQueueGenericSend()中被调用，源码具体见 代码清单:信号量-14_。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-14 prvCopyDataToQueue()源码（已删减，只保留互斥量部分）
+    :name: 代码清单:信号量-14
     :linenos:
-代码清单17‑14 prvCopyDataToQueue()源码（已删减，只保留互斥量部分）
 
-1 #if ( configUSE_MUTEXES == 1 )
+    #if ( configUSE_MUTEXES == 1 )
+    {
+    if ( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX )
+        {
+    /* The mutex is no longer being held. */
+            xReturn = xTaskPriorityDisinherit( ( void * ) pxQueue->pxMutexHolder );
+    pxQueue->pxMutexHolder = NULL;
+        } else
+        {
+            mtCOVERAGE_TEST_MARKER();
+        }
+    }
+    #endif/* configUSE_MUTEXES */
 
-2 {
+        pxQueue->uxMessagesWaiting = uxMessagesWaiting + 1;
 
-3 if ( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX )
-
-4 {
-
-5 /\* The mutex is no longer being held.
-\*/
-
-6 xReturn = xTaskPriorityDisinherit( ( void \* ) pxQueue->pxMutexHolder );
-
-7 pxQueue->pxMutexHolder = NULL;
-
-8 } else
-
-9 {
-
-10 mtCOVERAGE_TEST_MARKER();
-
-11 }
-
-12 }
-
-13 #endif/\* configUSE_MUTEXES \*/
-
-14
-
-15 pxQueue->uxMessagesWaiting = uxMessagesWaiting + 1;
 
 看FreeRTOS的源码就是比较头大，层层调用，真正恢复任务的优先级函数其实是调用
 xTaskPriorityDisinherit()，而且系统会将结构体的pxMutexHolder成员变量指向NULL，表示暂时没有任
 务持有改互斥量，对结构体成员uxMessagesWaiting加1操作就代表了释放互斥量，表示此时互斥量是有效的，
-其他任务可以来获取。下面来看看xTaskPriorityDisinherit()函数的源码，具体见代码清单17‑15。
+其他任务可以来获取。下面来看看xTaskPriorityDisinherit()函数的源码，具体见 代码清单:信号量-15_。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-15 xTaskPriorityDisinherit()源码
+    :name: 代码清单:信号量-15
     :linenos:
-代码清单17‑15 xTaskPriorityDisinherit()源码
 
-1 #if ( configUSE_MUTEXES == 1 )
+    #if ( configUSE_MUTEXES == 1 )
 
-2
+    BaseType_t xTaskPriorityDisinherit( TaskHandle_t const pxMutexHolder )
+    {
+        TCB_t * const pxTCB = ( TCB_t * ) pxMutexHolder;
+        BaseType_t xReturn = pdFALSE;
 
-3 BaseType_t xTaskPriorityDisinherit( TaskHandle_t const pxMutexHolder )
+    if ( pxMutexHolder != NULL ) {			(1)
+            configASSERT( pxTCB == pxCurrentTCB );
 
-4 {
+            configASSERT( pxTCB->uxMutexesHeld );
+            ( pxTCB->uxMutexesHeld )--;
 
-5 TCB_t \* const pxTCB = ( TCB_t \* ) pxMutexHolder;
+    /* 判断优先级是否被临时提升*/
+    if ( pxTCB->uxPriority != pxTCB->uxBasePriority ) {	(2)
+    /* 如果任务没有持有其他互斥量 */
+    if ( pxTCB->uxMutexesHeld == ( UBaseType_t ) 0 ) {	(3)
+    /* 将任务从状态列表中删除 */
+    if (uxListRemove(&(pxTCB->xStateListItem ) ) == ( UBaseType_t ) 0 ) {
+                        taskRESET_READY_PRIORITY( pxTCB->uxPriority );(4)
+                    } else {
+                        mtCOVERAGE_TEST_MARKER();
+                    }
+                    traceTASK_PRIORITY_DISINHERIT( pxTCB, pxTCB->uxBasePriority );
 
-6 BaseType_t xReturn = pdFALSE;
+    /* 在将任务添加到新的就绪列表之前，恢复任务的初始优先级 */
+                    pxTCB->uxPriority = pxTCB->uxBasePriority;	(5)
 
-7
+    /* 同时要重置等待事件列表的优先级 */
+    listSET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ),	(6)
+    ( TickType_t ) configMAX_PRIORITIES -(TickType_t ) pxTCB->uxPriority );
 
-8 if ( pxMutexHolder != NULL ) { **(1)**
+    /* 将任务重新添加到就绪列表中 */
+                    prvAddTaskToReadyList( pxTCB );			(7)
 
-9 configASSERT( pxTCB == pxCurrentTCB );
+                    xReturn = pdTRUE;
+                } else {
+                    mtCOVERAGE_TEST_MARKER();
+                }
+            } else {
+                mtCOVERAGE_TEST_MARKER();
+            }
+        } else {
+            mtCOVERAGE_TEST_MARKER();
+        }
 
-10
+    return xReturn;
+    }
 
-11 configASSERT( pxTCB->uxMutexesHeld );
+    #endif/* configUSE_MUTEXES */
 
-12 ( pxTCB->uxMutexesHeld )--;
 
-13
+-   代码清单:信号量-15_ **(1)**\ ：只有当有任务持有互斥量的时候，才会进行释放互斥量的操作。而且必须是持有
+    互斥量的任务才允许释放互斥量，其他任务都没有权利去操作被任务持有的互斥量。
 
-14 /\* 判断优先级是否被临时提升*/
+-   代码清单:信号量-15_ **(2)**\ ：判断优先级是否被提升，如果没有继承过优先级，那也无需进行优先级恢复的操
+    作\ **(3)-(8)**\ ，可以直接退出。
 
-15 if ( pxTCB->uxPriority != pxTCB->uxBasePriority ) { **(2)**
+-   代码清单:信号量-15_ **(3)**\ ：再看看这个任务持有多少个互斥量，因为任务可以持有多个互斥量的，如果这个
+    互斥量释放了，就恢复初始的优先级，那么其他互斥量的优先级继承机制岂不是不起作用了，当然啦，这种一个
+    任务持有多个互斥量的情景不多见，一般情况都是一个任务持有一个互斥量。
 
-16 /\* 如果任务没有持有其他互斥量 \*/
+-   代码清单:信号量-15_ **(4)**\ ：调用uxListRemove()函数将任务从状态列表中删除，无论该任务处于什么状态，
+    因为要恢复任务的初始优先级，就必须先从状态列表中移除，待恢复初后再添加到就绪列表中，按优先级进行排序。
 
-17 if ( pxTCB->uxMutexesHeld == ( UBaseType_t ) 0 ) { **(3)**
+-   代码清单:信号量-15_ **(5)**\ ：在将任务添加到就绪列表之前，恢复任务的初始优先级。
 
-18 /\* 将任务从状态列表中删除 \*/
+-   代码清单:信号量-15_ **(6)**\ ：同时要重置等待事件列表的优先级。
 
-19 if (uxListRemove(&(pxTCB->xStateListItem ) ) == ( UBaseType_t ) 0 ) {
-
-20 taskRESET_READY_PRIORITY( pxTCB->uxPriority );\ **(4)**
-
-21 } else {
-
-22 mtCOVERAGE_TEST_MARKER();
-
-23 }
-
-24 traceTASK_PRIORITY_DISINHERIT( pxTCB, pxTCB->uxBasePriority );
-
-25
-
-26 /\* 在将任务添加到新的就绪列表之前，恢复任务的初始优先级 \*/
-
-27 pxTCB->uxPriority = pxTCB->uxBasePriority; **(5)**
-
-28
-
-29 /\* 同时要重置等待事件列表的优先级 \*/
-
-30 listSET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ), **(6)**
-
-31 ( TickType_t ) configMAX_PRIORITIES -(TickType_t ) pxTCB->uxPriority );
-
-32
-
-33 /\* 将任务重新添加到就绪列表中 \*/
-
-34 prvAddTaskToReadyList( pxTCB ); **(7)**
-
-35
-
-36 xReturn = pdTRUE;
-
-37 } else {
-
-38 mtCOVERAGE_TEST_MARKER();
-
-39 }
-
-40 } else {
-
-41 mtCOVERAGE_TEST_MARKER();
-
-42 }
-
-43 } else {
-
-44 mtCOVERAGE_TEST_MARKER();
-
-45 }
-
-46
-
-47 return xReturn;
-
-48 }
-
-49
-
-50 #endif/\* configUSE_MUTEXES \*/
-
-代码清单17‑15\ **(1)**\ ：只有当有任务持有互斥量的时候，才会进行释放互斥量的操作。而且必须是持有
-互斥量的任务才允许释放互斥量，其他任务都没有权利去操作被任务持有的互斥量。
-
-代码清单17‑15\ **(2)**\ ：判断优先级是否被提升，如果没有继承过优先级，那也无需进行优先级恢复的操
-作\ **(3)-(8)**\ ，可以直接退出。
-
-代码清单17‑15\ **(3)**\ ：再看看这个任务持有多少个互斥量，因为任务可以持有多个互斥量的，如果这个
-互斥量释放了，就恢复初始的优先级，那么其他互斥量的优先级继承机制岂不是不起作用了，当然啦，这种一个
-任务持有多个互斥量的情景不多见，一般情况都是一个任务持有一个互斥量。
-
-代码清单17‑15\ **(4)**\ ：调用uxListRemove()函数将任务从状态列表中删除，无论该任务处于什么状态，
-因为要恢复任务的初始优先级，就必须先从状态列表中移除，待恢复初后再添加到就绪列表中，按优先级进行排序。
-
-代码清单17‑15\ **(5)**\ ：在将任务添加到就绪列表之前，恢复任务的初始优先级。
-
-代码清单17‑15\ **(6)**\ ：同时要重置等待事件列表的优先级。
-
-代码清单17‑15\ **(7)**\ ：将任务重新添加到就绪列表中。
+-   代码清单:信号量-15_ **(7)**\ ：将任务重新添加到就绪列表中。
 
 至此，优先级继承恢复就讲解完毕，简单总结一下互斥量释放的过程：
 
@@ -1467,67 +1029,41 @@ xTaskPriorityDisinherit()，而且系统会将结构体的pxMutexHolder成员变
 还要判断持有互斥量的任务是否有优先级继承，如果有的话，要将任务的优先级恢复到初始值。当然，该任务必
 须在没有持有其他互斥量的情况下，才能将继承的优先级恢复到原始值。然后判断是否有任务要获取互斥量并且
 进入阻塞状态，有的话解除阻塞，最后返回成功信息（pdPASS），下面看看互斥量释放函数是如何使用的，
-具体见代码清单17‑16加粗部分。
+具体见 代码清单:信号量-16_ 加粗部分。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-16xSemaphoreGive()使用实例
+    :emphasize-lines: 20-21
+    :name: 代码清单:信号量-16
     :linenos:
-代码清单17‑16xSemaphoreGive()使用实例
 
-1 SemaphoreHandle_t xSemaphore = NULL;
+    SemaphoreHandle_t xSemaphore = NULL;
 
-2
+    void vATask( void * pvParameters )
+    {
+    /* 创建一个互斥量用于保护共享资源 */
+        xSemaphore = xSemaphoreCreateMutex();
 
-3 void vATask( void \* pvParameters )
+    if ( xSemaphore != NULL ) {
+    if ( xSemaphoreGive( xSemaphore ) != pdTRUE ) {
+    /* 
+    如果要释放一个互斥量，必须先有第一次的获取*/
+            }
 
-4 {
+    /* 获取互斥量，不等待 */
+    if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 0 ) ) {
+    /* 获取到互斥量，可以访问共享资源 */
 
-5 /\* 创建一个互斥量用于保护共享资源 \*/
+    /* ... 访问共享资源代码 */
 
-6 xSemaphore = xSemaphoreCreateMutex();
+    /* 共享资源访问完毕，释放互斥量 */
+    if ( xSemaphoreGive( xSemaphore ) != pdTRUE ) {
+    /* 互斥量释放失败，这可不是我们希望的 */
+                }
+            }
+        }
+    }
 
-7
-
-8 if ( xSemaphore != NULL ) {
-
-9 if ( xSemaphoreGive( xSemaphore ) != pdTRUE ) {
-
-10 /\*
-
-11 如果要释放一个互斥量，必须先有第一次的获取*/
-
-12 }
-
-13
-
-14 /\* 获取互斥量，不等待 \*/
-
-15 if ( xSemaphoreTake( xSemaphore, ( TickType_t ) 0 ) ) {
-
-16 /\* 获取到互斥量，可以访问共享资源 \*/
-
-17
-
-18 /\* ...
-访问共享资源代码 \*/
-
-19
-
-**20 /\* 共享资源访问完毕，释放互斥量 \*/**
-
-**21 if ( xSemaphoreGive( xSemaphore ) != pdTRUE ) {**
-
-22 /\* 互斥量释放失败，这可不是我们希望的 \*/
-
-23 }
-
-24 }
-
-25 }
-
-26 }
 
 递归互斥量释放函数xSemaphoreGiveRecursive()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1535,23 +1071,17 @@ xTaskPriorityDisinherit()，而且系统会将结构体的pxMutexHolder成员变
  xSemaphoreGiveRecursive()是一个用于释放递归互斥量的宏。要想使用该函数必须在头文件FreeRTOSConfig.h把宏configUSE_RECURSIVE_MUTEXES定义为1。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-17 xSemaphoreGiveRecursive函数原型
+    :name: 代码清单:信号量-17
     :linenos:
-代码清单17‑17 xSemaphoreGiveRecursive函数原型
 
-1 #if( configUSE_RECURSIVE_MUTEXES == 1 )
+    #if( configUSE_RECURSIVE_MUTEXES == 1 )
 
-2
+    #definexSemaphoreGiveRecursive( xMutex )
+        xQueueGiveMutexRecursive( ( xMutex ) )
 
-3 #definexSemaphoreGiveRecursive( xMutex ) \\
+    #endif
 
-4 xQueueGiveMutexRecursive( ( xMutex ) )
-
-5
-
-6 #endif
 
 xSemaphoreGiveRecursive()函数用于释放一个递归互斥量。已经获取递归互斥量的任务可以重复获取该递归
 互斥量。使用xSemaphoreTakeRecursive() 函数成功获取几次递归互斥量，就要使用xSemaphoreGiveRecursive()
@@ -1559,185 +1089,112 @@ xSemaphoreGiveRecursive()函数用于释放一个递归互斥量。已经获取�
 只有已持有互斥量所有权的任务才能释放它，每释放一次该递归互斥量，它的计数值就减1。当该互斥量的计数
 值为0时（即持有任务已经释放所有的持有操作），互斥量则变为开锁状态，等待在该互斥量上的任务将被唤醒。
 如果任务的优先级被互斥量的优先级翻转机制临时提升，那么当互斥量被释放后，任务的优先级将恢复为原本设
-定的优先级，具体见代码清单17‑18。
+定的优先级，具体见 代码清单:信号量-18_。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-18 xQueueGiveMutexRecursive源码
+    :name: 代码清单:信号量-18
     :linenos:
-代码清单17‑18 xQueueGiveMutexRecursive源码
 
-1 #if ( configUSE_RECURSIVE_MUTEXES == 1 )
+    #if ( configUSE_RECURSIVE_MUTEXES == 1 )
 
-2
+    BaseType_t xQueueGiveMutexRecursive( QueueHandle_t xMutex )
+    {
+        BaseType_t xReturn;
+        Queue_t * const pxMutex = ( Queue_t * ) xMutex;
 
-3 BaseType_t xQueueGiveMutexRecursive( QueueHandle_t xMutex )
+        configASSERT( pxMutex );
+    /* 判断任务是否持有这个递归互斥量 */
+    if ( pxMutex->pxMutexHolder == (void *)xTaskGetCurrentTaskHandle()){	(1)
+            traceGIVE_MUTEX_RECURSIVE( pxMutex );
 
-4 {
+    /* 调用次数的计数值减一 */
+            ( pxMutex->u.uxRecursiveCallCount )--;			(2)
 
-5 BaseType_t xReturn;
+    /* 如果计数值减到0 */
+    if ( pxMutex->u.uxRecursiveCallCount==(UBaseType_t) 0 ){	(3)
+    /* 释放成功 */
+                ( void ) xQueueGenericSend( pxMutex,
+                                            NULL,
+                                            queueMUTEX_GIVE_BLOCK_TIME,
+                                            queueSEND_TO_BACK );	(4)
+            } else {
+                mtCOVERAGE_TEST_MARKER();
+            }
 
-6 Queue_t \* const pxMutex = ( Queue_t \* ) xMutex;
+            xReturn = pdPASS;
+        } else {
+    /* 这个任务不具备释放这个互斥量的权利 */
+            xReturn = pdFAIL;					(5)
 
-7
+            traceGIVE_MUTEX_RECURSIVE_FAILED( pxMutex );
+        }
 
-8 configASSERT( pxMutex );
+    return xReturn;
+    }
 
-9 /\* 判断任务是否持有这个递归互斥量 \*/
+    #endif/* configUSE_RECURSIVE_MUTEXES */
+    /*-----------------------------------------------------------*/
 
-10 if ( pxMutex->pxMutexHolder == (void \*)xTaskGetCurrentTaskHandle()){ **(1)**
 
-11 traceGIVE_MUTEX_RECURSIVE( pxMutex );
+-   代码清单:信号量-18_ **(1)**\ ：判断任务是否持有这个递归互斥量，只有拥有这个递归互斥量所有权的任务才能对其进行释放操作。
 
-12
+-   代码清单:信号量-18_ **(2)**\ ：每调用一次递归互斥量释放函数，递归互斥量的计数值u.uxRecursiveCallCount就会减一。
 
-13 /\* 调用次数的计数值减一 \*/
+-   代码清单:信号量-18_ **(3)**\ ：如果计数值减到0，就表明这个递归互斥量已经可以变得有效了。
 
-14 ( pxMutex->u.uxRecursiveCallCount )--; **(2)**
+-   代码清单:信号量-18_ **(4)**\ ：需要调用一次通用入队函数xQueueGenericSend()释放一个递归互斥量，注意了，
+    这一步才是让递归互斥量从无效变成有效，同时系统还需要检查一下释放有任务想获取这个递归互斥量，如果有就将其恢复。
 
-15
-
-16 /\* 如果计数值减到0 \*/
-
-17 if ( pxMutex->u.uxRecursiveCallCount==(UBaseType_t) 0 ){ **(3)**
-
-18 /\* 释放成功 \*/
-
-19 ( void ) xQueueGenericSend( pxMutex,
-
-20 NULL,
-
-21 queueMUTEX_GIVE_BLOCK_TIME,
-
-22 queueSEND_TO_BACK ); **(4)**
-
-23 } else {
-
-24 mtCOVERAGE_TEST_MARKER();
-
-25 }
-
-26
-
-27 xReturn = pdPASS;
-
-28 } else {
-
-29 /\* 这个任务不具备释放这个互斥量的权利 \*/
-
-30 xReturn = pdFAIL; **(5)**
-
-31
-
-32 traceGIVE_MUTEX_RECURSIVE_FAILED( pxMutex );
-
-33 }
-
-34
-
-35 return xReturn;
-
-36 }
-
-37
-
-38 #endif/\* configUSE_RECURSIVE_MUTEXES \*/
-
-39 /*-----------------------------------------------------------*/
-
-代码清单17‑18\ **(1)**\ ：判断任务是否持有这个递归互斥量，只有拥有这个递归互斥量所有权的任务才能对其进行释放操作。
-
-代码清单17‑18\ **(2)**\ ：每调用一次递归互斥量释放函数，递归互斥量的计数值u.uxRecursiveCallCount就会减一。
-
-代码清单17‑18\ **(3)**\ ：如果计数值减到0，就表明这个递归互斥量已经可以变得有效了。
-
-代码清单17‑18\ **(4)**\ ：需要调用一次通用入队函数xQueueGenericSend()释放一个递归互斥量，注意了，
-这一步才是让递归互斥量从无效变成有效，同时系统还需要检查一下释放有任务想获取这个递归互斥量，如果有就将其恢复。
-
-代码清单17‑18\ **(5)**\ ：这个任务不具备释放这个互斥量的权利，直接返回错误。
+-   代码清单:信号量-18_ **(5)**\ ：这个任务不具备释放这个互斥量的权利，直接返回错误。
 
 互斥量和递归互斥量的最大区别在于一个递归互斥量可以被已经获取这个递归互斥量的任务重复获取，而不会形成
 死锁。这个递归调用功能是通过队列结构体成员u\ **.**\ uxRecursiveCallCount实现的，这个变量用于存储递
 归调用的次数，每次获取递归互斥量后，这个变量加1，在释放递归互斥量后，这个变量减1。只有这个变量减到0，
 即释放和获取的次数相等时，互斥量才能变成有效状态，然后才允许使用xQueueGenericSend()函数释放一个递归
-互斥量，xSemaphoreGiveRecursive()函数使用实例具体见代码清单17‑19加粗部分。
+互斥量，xSemaphoreGiveRecursive()函数使用实例具体见 代码清单:信号量-19_ 加粗部分。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-19xSemaphoreGiveRecursive()函数使用实例
+    :emphasize-lines: 24-27
+    :name: 代码清单:信号量-19
     :linenos:
-代码清单17‑19xSemaphoreGiveRecursive()函数使用实例
 
-1 SemaphoreHandle_t xMutex = NULL;
+    SemaphoreHandle_t xMutex = NULL;
 
-2
+    void vATask( void * pvParameters )
+    {
+    /* 创建一个递归互斥量用于保护共享资源 */
+        xMutex = xSemaphoreCreateRecursiveMutex();
+    }
 
-3 void vATask( void \* pvParameters )
+    void vAnotherTask( void * pvParameters )
+    {
+    /* 其他功能代码 */
 
-4 {
+    if ( xMutex != NULL ) {
+    /* 尝试获取递归互斥量
+    如果不可用则等待10个ticks */
+    if(xSemaphoreTakeRecursive(xMutex,( TickType_t ) 10 )== pdTRUE) {
+    /* 获取到递归信号量，可以访问共享资源 */
+    /* ... 其他功能代码 */
 
-5 /\* 创建一个递归互斥量用于保护共享资源 \*/
+    /* 重复获取递归互斥量 */
+                xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 );
+                xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 );
 
-6 xMutex = xSemaphoreCreateRecursiveMutex();
+    /* 释放递归互斥量，获取了多少次就要释放多少次 */
+                xSemaphoreGiveRecursive( xMutex );
+                xSemaphoreGiveRecursive( xMutex );
+                xSemaphoreGiveRecursive( xMutex );
 
-7 }
+    /* 现在递归互斥量可以被其他任务获取 */
+            } else {
+    /* 没能成功获取互斥量，所以不能安全的访问共享资源 */
+            }
+        }
+    }
 
-8
-
-9 void vAnotherTask( void \* pvParameters )
-
-10 {
-
-11 /\* 其他功能代码 \*/
-
-12
-
-13 if ( xMutex != NULL ) {
-
-14 /\* 尝试获取递归互斥量
-
-15 如果不可用则等待10个ticks \*/
-
-16 if(xSemaphoreTakeRecursive(xMutex,( TickType_t ) 10 )== pdTRUE) {
-
-17 /\* 获取到递归信号量，可以访问共享资源 \*/
-
-18 /\* ...
-其他功能代码 \*/
-
-19
-
-20 /\* 重复获取递归互斥量 \*/
-
-21 xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 );
-
-22 xSemaphoreTakeRecursive( xMutex, ( TickType_t ) 10 );
-
-23
-
-**24 /\* 释放递归互斥量，获取了多少次就要释放多少次 \*/**
-
-**25 xSemaphoreGiveRecursive( xMutex );**
-
-**26 xSemaphoreGiveRecursive( xMutex );**
-
-**27 xSemaphoreGiveRecursive( xMutex );**
-
-28
-
-29 /\* 现在递归互斥量可以被其他任务获取 \*/
-
-30 } else {
-
-31 /\* 没能成功获取互斥量，所以不能安全的访问共享资源 \*/
-
-32 }
-
-33 }
-
-34 }
 
 互斥量实验
 ~~~~~~~~~~~
@@ -1748,1106 +1205,560 @@ xSemaphoreGiveRecursive()函数用于释放一个递归互斥量。已经获取�
 模拟优先级翻转实验是在FreeRTOS中创建了三个任务与一个二值信号量，任务分别是高优先级任务，中优先级任
 务，低优先级任务，用于模拟产生优先级翻转。低优先级任务在获取信号量的时候，被中优先级打断，中优先级的
 任务执行时间较长，因为低优先级还未释放信号量，那么高优先级任务就无法取得信号量继续运行，此时就
-发生了优先级翻转，任务在运行中，使用串口打印出相关信息，具体见代码清单17‑20加粗部分。
+发生了优先级翻转，任务在运行中，使用串口打印出相关信息，具体见 代码清单:信号量-20_ 加粗部分。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-20模拟优先级翻转实验
+    :emphasize-lines: 39-41,54,172-197,205-211,219-236
+    :name: 代码清单:信号量-20
     :linenos:
-代码清单17‑20模拟优先级翻转实验
 
-1 /*\*
+    /**
+    *********************************************************************
+    * @file    main.c
+    * @author  fire
+    * @version V1.0
+    * @date    2018-xx-xx
+    * @brief   FreeRTOS V9.0.0 + STM32 模拟优先级翻转
+    *********************************************************************
+    * @attention
+    *
+    * 实验平台:野火  STM32 开发板
+    * 论坛    :http://www.firebbs.cn
+    * 淘宝    :https://fire-stm32.taobao.com
+    *
+    **********************************************************************
+    */
+
+    /*
+    *************************************************************************
+    *                             包含的头文件
+    *************************************************************************
+    */
+    /* FreeRTOS头文件 */
+    #include"FreeRTOS.h"
+    #include"task.h"
+    #include"queue.h"
+    #include"semphr.h"
+    /* 开发板硬件bsp头文件 */
+    #include"bsp_led.h"
+    #include"bsp_usart.h"
+    #include"bsp_key.h"
+    /**************************** 任务句柄 ********************************/
+    /*
+    * 任务句柄是一个指针，用于指向一个任务，当任务创建好之后，它就具有了一个任务句柄
+    * 以后我们要想操作这个任务都需要通过这个任务句柄，如果是自身的任务操作自己，那么
+    * 这个句柄可以为NULL。
+    */
+    static TaskHandle_t AppTaskCreate_Handle = NULL;/* 创建任务句柄 */
+    static TaskHandle_t LowPriority_Task_Handle = NULL;/*LowPriority_Task任务句柄 */
+    static TaskHandle_t MidPriority_Task_Handle = NULL;/* MidPriority_Task任务句柄 */
+    static TaskHandle_t HighPriority_Task_Handle = NULL;/* HighPriority_Task任务句柄 */
+    /******************************* 内核对象句柄 ***************************/
+    /*
+    * 信号量，消息队列，事件标志组，软件定时器这些都属于内核的对象，要想使用这些内核
+    * 对象，必须先创建，创建成功之后会返回一个相应的句柄。实际上就是一个指针，后续我
+    * 们就可以通过这个句柄操作这些内核对象。
+    *
+    *
+    内核对象说白了就是一种全局的数据结构，通过这些数据结构我们可以实现任务间的通信，
+    * 任务间的事件同步等各种功能。至于这些功能的实现我们是通过调用这些内核对象的函数
+    * 来完成的
+    *
+    */
+    SemaphoreHandle_t BinarySem_Handle =NULL;
+
+    /************************** 全局变量声明 ********************************/
+    /*
+    * 当我们在写应用程序的时候，可能需要用到一些全局变量。
+    */
+
+
+    /*************************** 宏定义 ************************************/
+    /*
+    * 当我们在写应用程序的时候，可能需要用到一些宏定义。
+    */
+
+
+    /*
+    *************************************************************************
+    *                             函数声明
+    *************************************************************************
+    */
+    static void AppTaskCreate(void);/* 用于创建任务 */
+
+    tatic void LowPriority_Task(void* pvParameters);/* LowPriority_Task任务实现 */
+    tatic void MidPriority_Task(void* pvParameters);/* MidPriority_Task任务实现 */
+    tatic void HighPriority_Task(void* pvParameters);/* MidPriority_Task任务实现 */
+
+    static void BSP_Init(void);/* 用于初始化板载相关资源 */
+
+    /*****************************************************************
+    * @brief  主函数
+    * @param  无
+    * @retval 无
+    * @note   第一步：开发板硬件初始化
+    第二步：创建APP应用任务
+    第三步：启动FreeRTOS，开始多任务调度
+    ****************************************************************/
+    int main(void)
+    {
+        BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
+
+    /* 开发板硬件初始化 */
+        BSP_Init();
+        printf("这是一个[野火]-STM32全系列开发板-FreeRTOS优先级翻转实验！\n");
+    /* 创建AppTaskCreate任务 */
+        xReturn = xTaskCreate((TaskFunction_t )AppTaskCreate,/* 任务入口函数 */
+    (const char*    )"AppTaskCreate",/* 任务名字 */
+    (uint16_t       )512,  /* 任务栈大小 */
+    (void*          )NULL,/* 任务入口函数参数 */
+                        (UBaseType_t    )1, /* 任务的优先级 */
+    (TaskHandle_t*  )&AppTaskCreate_Handle);/* 任务控制块指针 */
+    /* 启动任务调度 */
+    if (pdPASS == xReturn)
+            vTaskStartScheduler();   /* 启动任务，开启调度 */
+    else
+    return -1;
+
+    while (1);  /* 正常不会执行到这里 */
+    }
+
+    /***********************************************************************
+    * @ 函数名： AppTaskCreate
+    * @ 功能说明：为了方便管理，所有的任务创建函数都放在这个函数里面
+    * @ 参数：无
+    * @ 返回值：无
+    ******************************************************************/
+    static void AppTaskCreate(void)
+    {
+        BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
+
+        taskENTER_CRITICAL();           //进入临界区
+
+    /* 创建Test_Queue */
+        BinarySem_Handle = xSemaphoreCreateBinary();
+    if (NULL != BinarySem_Handle)
+            printf("BinarySem_Handle二值信号量创建成功!\r\n");
+
+        xReturn = xSemaphoreGive( BinarySem_Handle );//给出二值信号量
+    //  if( xReturn == pdTRUE )
+    //    printf("释放信号量!\r\n");
+
+    /* 创建LowPriority_Task任务 */
+        xReturn = xTaskCreate((TaskFunction_t )LowPriority_Task, /* 任务入口函数 */
+                            (const char*   )"LowPriority_Task",/*任务名字 */
+                            (uint16_t       )512,   /* 任务栈大小 */
+                            (void*          )NULL,	/* 任务入口函数参数 */
+            (UBaseType_t    )2,	/* 任务的优先级 */
+                            (TaskHandle_t*  )&LowPriority_Task_Handle);
+    if (pdPASS == xReturn)
+            printf("创建LowPriority_Task任务成功!\r\n");
+
+    /* 创建MidPriority_Task任务 */
+        xReturn = xTaskCreate((TaskFunction_t )MidPriority_Task,  /* 任务入口函数 */
+    (const char*    )"MidPriority_Task",/* 任务名字 */
+    (uint16_t       )512,  /* 任务栈大小 */
+    (void*          )NULL,/* 任务入口函数参数 */
+                        (UBaseType_t    )3, /* 任务的优先级 */
+    (TaskHandle_t*)&MidPriority_Task_Handle);/*任务控制块指针 */
+    if (pdPASS == xReturn)
+            printf("创建MidPriority_Task任务成功!\n");
+
+    /* 创建HighPriority_Task任务 */
+        xReturn = xTaskCreate((TaskFunction_t )HighPriority_Task, /* 任务入口函数 */
+                        (const char*    )"HighPriority_Task",/* 任务名字 */
+                        (uint16_t       )512,  /* 任务栈大小 */
+                        (void*          )NULL,/* 任务入口函数参数 */
+    (UBaseType_t    )4, /* 任务的优先级 */
+                        (TaskHandle_t*  )&HighPriority_Task_Handle);/*任务控制块指针 */
+    if (pdPASS == xReturn)
+            printf("创建HighPriority_Task任务成功!\n\n");
+
+        vTaskDelete(AppTaskCreate_Handle); //删除AppTaskCreate任务
+
+        taskEXIT_CRITICAL();            //退出临界区
+    }
+
+
+
+    /**********************************************************************
+    * @ 函数名： LowPriority_Task
+    * @ 功能说明： LowPriority_Task任务主体
+    * @ 参数：
+    * @ 返回值：无
+    ********************************************************************/
+    static void LowPriority_Task(void* parameter)
+    {
+    static uint32_t i;
+        BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
+    while (1) {
+            printf("LowPriority_Task 获取信号量\n");
+    //获取二值信号量 xSemaphore,没获取到则一直等待
+            xReturn = xSemaphoreTake(BinarySem_Handle,/* 二值信号量句柄 */
+                                    portMAX_DELAY); /* 等待时间 */
+    if ( xReturn == pdTRUE )
+                printf("LowPriority_Task Runing\n\n");
+
+    for (i=0; i<2000000; i++) { //模拟低优先级任务占用信号量
+                taskYIELD();//发起任务调度
+            }
+
+            printf("LowPriority_Task 释放信号量!\r\n");
+            xReturn = xSemaphoreGive( BinarySem_Handle );//给出二值信号量
+    //    if( xReturn == pdTRUE )
+    //      ;             /* 什么都不做 */
+
+            LED1_TOGGLE;
+
+            vTaskDelay(500);
+        }
+    }
+
+    /**********************************************************************
+    * @ 函数名： MidPriority_Task
+    * @ 功能说明： MidPriority_Task任务主体
+    * @ 参数：
+    * @ 返回值：无
+    ********************************************************************/
+    static void MidPriority_Task(void* parameter)
+    {
+    while (1) {
+            printf("MidPriority_Task Runing\n");
+            vTaskDelay(500);
+        }
+    }
+
+    /**********************************************************************
+    * @ 函数名： HighPriority_Task
+    * @ 功能说明： HighPriority_Task 任务主体
+    * @ 参数：
+    * @ 返回值：无
+    ********************************************************************/
+    static void HighPriority_Task(void* parameter)
+    {
+        BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdPASS */
+    while (1) {
+            printf("HighPriority_Task 获取信号量\n");
+    //获取二值信号量 xSemaphore,没获取到则一直等待
+            xReturn = xSemaphoreTake(BinarySem_Handle,/* 二值信号量句柄 */
+                                    portMAX_DELAY); /* 等待时间 */
+    if (pdTRUE == xReturn)
+                printf("HighPriority_Task Runing\n");
+            LED1_TOGGLE;
+            xReturn = xSemaphoreGive( BinarySem_Handle );//给出二值信号量
+    //    if( xReturn == pdTRUE )
+    //printf("HighPriority_Task 释放信号量!\r\n");
+
+            vTaskDelay(500);
+        }
+    }
+
+    /***********************************************************************
+    * @ 函数名： BSP_Init
+    * @ 功能说明：板级外设初始化，所有板子上的初始化均可放在这个函数里面
+    * @ 参数：
+    * @ 返回值：无
+    *********************************************************************/
+    static void BSP_Init(void)
+    {
+    /*
+        * STM32中断优先级分组为4，即4bit都用来表示抢占优先级，范围为：0~15
+        * 优先级分组只需要分组一次即可，以后如果有其他的任务需要用到中断，
+        * 都统一用这个优先级分组，千万不要再分组，切忌。
+        */
+        NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
+
+    /* LED 初始化 */
+        LED_GPIO_Config();
+
+    /* 串口初始化	*/
+        USART_Config();
+
+    /* 按键初始化	*/
+        Key_GPIO_Config();
+
+    }
+
+    /**************************END OF FILE****************************/
 
-2 \\*
-
-3 \* @file main.c
-
-4 \* @author fire
-
-5 \* @version V1.0
-
-6 \* @date 2018-xx-xx
-
-7 \* @brief FreeRTOS V9.0.0 + STM32 模拟优先级翻转
-
-8 \\*
-
-9 \* @attention
-
-10 \*
-
-11 \* 实验平台:野火 STM32 开发板
-
-12 \* 论坛 :http://www.firebbs.cn
-
-13 \* 淘宝 :https://fire-stm32.taobao.com
-
-14 \*
-
-15 \\*
-
-16 \*/
-
-17
-
-18 /\*
-
-19 \\*
-
-20 \* 包含的头文件
-
-21 \\*
-
-22 \*/
-
-23 /\* FreeRTOS头文件 \*/
-
-24 #include"FreeRTOS.h"
-
-25 #include"task.h"
-
-26 #include"queue.h"
-
-27 #include"semphr.h"
-
-28 /\* 开发板硬件bsp头文件 \*/
-
-29 #include"bsp_led.h"
-
-30 #include"bsp_usart.h"
-
-31 #include"bsp_key.h"
-
-32 /\* 任务句柄 \/
-
-33 /\*
-
-34 \* 任务句柄是一个指针，用于指向一个任务，当任务创建好之后，它就具有了一个任务句柄
-
-35 \* 以后我们要想操作这个任务都需要通过这个任务句柄，如果是自身的任务操作自己，那么
-
-36 \* 这个句柄可以为NULL。
-
-37 \*/
-
-38 static TaskHandle_t AppTaskCreate_Handle = NULL;/\* 创建任务句柄 \*/
-
-**39 static TaskHandle_t LowPriority_Task_Handle = NULL;/*LowPriority_Task任务句柄 \*/**
-
-**40 static TaskHandle_t MidPriority_Task_Handle = NULL;/\* MidPriority_Task任务句柄 \*/**
-
-**41 static TaskHandle_t HighPriority_Task_Handle = NULL;/\* HighPriority_Task任务句柄 \*/**
-
-42 /\* 内核对象句柄 \/
-
-43 /\*
-
-44 \* 信号量，消息队列，事件标志组，软件定时器这些都属于内核的对象，要想使用这些内核
-
-45 \* 对象，必须先创建，创建成功之后会返回一个相应的句柄。实际上就是一个指针，后续我
-
-46 \* 们就可以通过这个句柄操作这些内核对象。
-
-47 \*
-
-48 \*
-
-49 内核对象说白了就是一种全局的数据结构，通过这些数据结构我们可以实现任务间的通信，
-
-50 \* 任务间的事件同步等各种功能。至于这些功能的实现我们是通过调用这些内核对象的函数
-
-51 \* 来完成的
-
-52 \*
-
-53 \*/
-
-**54 SemaphoreHandle_t BinarySem_Handle =NULL;**
-
-55
-
-56 /\* 全局变量声明 \/
-
-57 /\*
-
-58 \* 当我们在写应用程序的时候，可能需要用到一些全局变量。
-
-59 \*/
-
-60
-
-61
-
-62 /\* 宏定义 \/
-
-63 /\*
-
-64 \* 当我们在写应用程序的时候，可能需要用到一些宏定义。
-
-65 \*/
-
-66
-
-67
-
-68 /\*
-
-69 \\*
-
-70 \* 函数声明
-
-71 \\*
-
-72 \*/
-
-73 static void AppTaskCreate(void);/\* 用于创建任务 \*/
-
-74
-
-75 static void LowPriority_Task(void\* pvParameters);/\* LowPriority_Task任务实现 \*/
-
-76 static void MidPriority_Task(void\* pvParameters);/\* MidPriority_Task任务实现 \*/
-
-77 static void HighPriority_Task(void\* pvParameters);/\* MidPriority_Task任务实现 \*/
-
-78
-
-79 static void BSP_Init(void);/\* 用于初始化板载相关资源 \*/
-
-80
-
-81 /\*
-
-82 \* @brief 主函数
-
-83 \* @param 无
-
-84 \* @retval 无
-
-85 \* @note 第一步：开发板硬件初始化
-
-86 第二步：创建APP应用任务
-
-87 第三步：启动FreeRTOS，开始多任务调度
-
-88 \/
-
-89 int main(void)
-
-90 {
-
-91 BaseType_t xReturn = pdPASS;/\* 定义一个创建信息返回值，默认为pdPASS \*/
-
-92
-
-93 /\* 开发板硬件初始化 \*/
-
-94 BSP_Init();
-
-95 printf("这是一个[野火]-STM32全系列开发板-FreeRTOS优先级翻转实验！\n");
-
-96 /\* 创建AppTaskCreate任务 \*/
-
-97 xReturn = xTaskCreate((TaskFunction_t )AppTaskCreate,/\* 任务入口函数 \*/
-
-98 (const char\* )"AppTaskCreate",/\* 任务名字 \*/
-
-99 (uint16_t )512, /\* 任务栈大小 \*/
-
-100 (void\* )NULL,/\* 任务入口函数参数 \*/
-
-101 (UBaseType_t )1, /\* 任务的优先级 \*/
-
-102 (TaskHandle_t\* )&AppTaskCreate_Handle);/\* 任务控制块指针 \*/
-
-103 /\* 启动任务调度 \*/
-
-104 if (pdPASS == xReturn)
-
-105 vTaskStartScheduler(); /\* 启动任务，开启调度 \*/
-
-106 else
-
-107 return -1;
-
-108
-
-109 while (1); /\* 正常不会执行到这里 \*/
-
-110 }
-
-111
-
-112
-
-113 /\*
-
-114 \* @ 函数名： AppTaskCreate
-
-115 \* @ 功能说明：为了方便管理，所有的任务创建函数都放在这个函数里面
-
-116 \* @ 参数：无
-
-117 \* @ 返回值：无
-
-118 \/
-
-119 static void AppTaskCreate(void)
-
-120 {
-
-121 BaseType_t xReturn = pdPASS;/\* 定义一个创建信息返回值，默认为pdPASS \*/
-
-122
-
-123 taskENTER_CRITICAL(); //进入临界区
-
-124
-
-125 /\* 创建Test_Queue \*/
-
-126 BinarySem_Handle = xSemaphoreCreateBinary();
-
-127 if (NULL != BinarySem_Handle)
-
-128 printf("BinarySem_Handle二值信号量创建成功!\r\n");
-
-129
-
-130 xReturn = xSemaphoreGive( BinarySem_Handle );//给出二值信号量
-
-131 // if( xReturn == pdTRUE )
-
-132 // printf("释放信号量!\r\n");
-
-133
-
-134 /\* 创建LowPriority_Task任务 \*/
-
-135 xReturn = xTaskCreate((TaskFunction_t )LowPriority_Task, /\* 任务入口函数 \*/
-
-136 (const char\* )"LowPriority_Task",/*任务名字 \*/
-
-137 (uint16_t )512, /\* 任务栈大小 \*/
-
-138 (void\* )NULL, /\* 任务入口函数参数 \*/
-
-139 (UBaseType_t )2, /\* 任务的优先级 \*/
-
-140 (TaskHandle_t\* )&LowPriority_Task_Handle);
-
-141 if (pdPASS == xReturn)
-
-142 printf("创建LowPriority_Task任务成功!\r\n");
-
-143
-
-144 /\* 创建MidPriority_Task任务 \*/
-
-145 xReturn = xTaskCreate((TaskFunction_t )MidPriority_Task, /\* 任务入口函数 \*/
-
-146 (const char\* )"MidPriority_Task",/\* 任务名字 \*/
-
-147 (uint16_t )512, /\* 任务栈大小 \*/
-
-148 (void\* )NULL,/\* 任务入口函数参数 \*/
-
-149 (UBaseType_t )3, /\* 任务的优先级 \*/
-
-150 (TaskHandle_t*)&MidPriority_Task_Handle);/*任务控制块指针 \*/
-
-151 if (pdPASS == xReturn)
-
-152 printf("创建MidPriority_Task任务成功!\n");
-
-153
-
-154 /\* 创建HighPriority_Task任务 \*/
-
-155 xReturn = xTaskCreate((TaskFunction_t )HighPriority_Task, /\* 任务入口函数 \*/
-
-156 (const char\* )"HighPriority_Task",/\* 任务名字 \*/
-
-157 (uint16_t )512, /\* 任务栈大小 \*/
-
-158 (void\* )NULL,/\* 任务入口函数参数 \*/
-
-159 (UBaseType_t )4, /\* 任务的优先级 \*/
-
-160 (TaskHandle_t\* )&HighPriority_Task_Handle);/*任务控制块指针 \*/
-
-161 if (pdPASS == xReturn)
-
-162 printf("创建HighPriority_Task任务成功!\n\n");
-
-163
-
-164 vTaskDelete(AppTaskCreate_Handle); //删除AppTaskCreate任务
-
-165
-
-166 taskEXIT_CRITICAL(); //退出临界区
-
-167 }
-
-168
-
-169
-
-170
-
-171 /\*
-
-172 \* @ 函数名： LowPriority_Task
-
-173 \* @ 功能说明： LowPriority_Task任务主体
-
-174 \* @ 参数：
-
-175 \* @ 返回值：无
-
-176 \/
-
-**177 static void LowPriority_Task(void\* parameter)**
-
-**178 {**
-
-**179 static uint32_t i;**
-
-**180 BaseType_t xReturn = pdPASS;/\* 定义一个创建信息返回值，默认为pdPASS \*/**
-
-**181 while (1) {**
-
-**182 printf("LowPriority_Task 获取信号量\n");**
-
-**183 //获取二值信号量 xSemaphore,没获取到则一直等待**
-
-**184 xReturn = xSemaphoreTake(BinarySem_Handle,/\* 二值信号量句柄 \*/**
-
-**185 portMAX_DELAY); /\* 等待时间 \*/**
-
-**186 if ( xReturn == pdTRUE )**
-
-**187 printf("LowPriority_Task Runing\n\n");**
-
-**188**
-
-**189 for (i=0; i<2000000; i++) { //模拟低优先级任务占用信号量**
-
-**190 taskYIELD();//发起任务调度**
-
-**191 }**
-
-**192**
-
-**193 printf("LowPriority_Task 释放信号量!\r\n");**
-
-**194 xReturn = xSemaphoreGive( BinarySem_Handle );//给出二值信号量**
-
-**195 // if( xReturn == pdTRUE )**
-
-**196 // ; /\* 什么都不做 \*/**
-
-**197**
-
-**198 LED1_TOGGLE;**
-
-**199**
-
-**200 vTaskDelay(500);**
-
-**201 }**
-
-**202 }**
-
-203
-
-204 /\*
-
-205 \* @ 函数名： MidPriority_Task
-
-206 \* @ 功能说明： MidPriority_Task任务主体
-
-207 \* @ 参数：
-
-208 \* @ 返回值：无
-
-209 \/
-
-**210 static void MidPriority_Task(void\* parameter)**
-
-**211 {**
-
-**212 while (1) {**
-
-**213 printf("MidPriority_Task Runing\n");**
-
-**214 vTaskDelay(500);**
-
-**215 }**
-
-**216 }**
-
-217
-
-218 /\*
-
-219 \* @ 函数名： HighPriority_Task
-
-220 \* @ 功能说明： HighPriority_Task 任务主体
-
-221 \* @ 参数：
-
-222 \* @ 返回值：无
-
-223 \/
-
-**224 static void HighPriority_Task(void\* parameter)**
-
-**225 {**
-
-**226 BaseType_t xReturn = pdTRUE;/\* 定义一个创建信息返回值，默认为pdPASS \*/**
-
-**227 while (1) {**
-
-**228 printf("HighPriority_Task 获取信号量\n");**
-
-**229 //获取二值信号量 xSemaphore,没获取到则一直等待**
-
-**230 xReturn = xSemaphoreTake(BinarySem_Handle,/\* 二值信号量句柄 \*/**
-
-**231 portMAX_DELAY); /\* 等待时间 \*/**
-
-**232 if (pdTRUE == xReturn)**
-
-**233 printf("HighPriority_Task Runing\n");**
-
-**234 LED1_TOGGLE;**
-
-**235 xReturn = xSemaphoreGive( BinarySem_Handle );//给出二值信号量**
-
-**236 // if( xReturn == pdTRUE )**
-
-**237 //printf("HighPriority_Task 释放信号量!\r\n");**
-
-**238**
-
-**239 vTaskDelay(500);**
-
-**240 }**
-
-**241 }**
-
-242
-
-243
-
-244 /\*
-
-245 \* @ 函数名： BSP_Init
-
-246 \* @ 功能说明：板级外设初始化，所有板子上的初始化均可放在这个函数里面
-
-247 \* @ 参数：
-
-248 \* @ 返回值：无
-
-249 \/
-
-250 static void BSP_Init(void)
-
-251 {
-
-252 /\*
-
-253 \* STM32中断优先级分组为4，即4bit都用来表示抢占优先级，范围为：0~15
-
-254 \* 优先级分组只需要分组一次即可，以后如果有其他的任务需要用到中断，
-
-255 \* 都统一用这个优先级分组，千万不要再分组，切忌。
-
-256 \*/
-
-257 NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
-
-258
-
-259 /\* LED 初始化 \*/
-
-260 LED_GPIO_Config();
-
-261
-
-262 /\* 串口初始化 \*/
-
-263 USART_Config();
-
-264
-
-265 /\* 按键初始化 \*/
-
-266 Key_GPIO_Config();
-
-267
-
-268 }
-
-269
-
-270 /END OF FILE/
-
-.. _互斥量实验-1:
 
 互斥量实验
-^^^^^
+^^^^^^^^^^
 
 互斥量实验是基于优先级翻转实验进行修改的，目的是为了测试互斥量的优先级继承机制是否有效。
 
 .. code-block:: c
-    :caption: 
-    :emphasize-lines: 
-    :name: 代码清单:信号量-
+    :caption: 代码清单:信号量-21互斥量实验
+    :emphasize-lines: 39-41,54,172-195,203-209,217-234
+    :name: 代码清单:信号量-21
     :linenos:
-代码清单17‑21互斥量实验
 
-1 /*\*
+    /**
+    *********************************************************************
+    * @file    main.c
+    * @author  fire
+    * @version V1.0
+    * @date    2018-xx-xx
+    * @brief   FreeRTOS V9.0.0 + STM32 互斥量同步
+    *********************************************************************
+    * @attention
+    *
+    * 实验平台:野火  STM32 开发板
+    * 论坛    :http://www.firebbs.cn
+    * 淘宝    :https://fire-stm32.taobao.com
+    *
+    **********************************************************************
+    */
+
+    /*
+    *************************************************************************
+    *                             包含的头文件
+    *************************************************************************
+    */
+    /* FreeRTOS头文件 */
+    #include"FreeRTOS.h"
+    #include"task.h"
+    #include"queue.h"
+    #include"semphr.h"
+    /* 开发板硬件bsp头文件 */
+    #include"bsp_led.h"
+    #include"bsp_usart.h"
+    #include"bsp_key.h"
+    /**************************** 任务句柄 ********************************/
+    /*
+    * 任务句柄是一个指针，用于指向一个任务，当任务创建好之后，它就具有了一个任务句柄
+    * 以后我们要想操作这个任务都需要通过这个任务句柄，如果是自身的任务操作自己，那么
+    * 这个句柄可以为NULL。
+    */
+    static TaskHandle_t AppTaskCreate_Handle = NULL;/* 创建任务句柄 */
+    static TaskHandle_t LowPriority_Task_Handle = NULL;/* LowPriority_Task任务句柄 */
+    static TaskHandle_t MidPriority_Task_Handle = NULL;/* MidPriority_Task任务句柄 */
+    static TaskHandle_t HighPriority_Task_Handle = NULL;/* HighPriority_Task任务句柄 */
+    /****************************** 内核对象句柄 *****************************/
+    /*
+    * 信号量，消息队列，事件标志组，软件定时器这些都属于内核的对象，要想使用这些内核
+    * 对象，必须先创建，创建成功之后会返回一个相应的句柄。实际上就是一个指针，后续我
+    * 们就可以通过这个句柄操作这些内核对象。
+    *
+    * 
+    内核对象说白了就是一种全局的数据结构，通过这些数据结构我们可以实现任务间的通信，
+    * 任务间的事件同步等各种功能。至于这些功能的实现我们是通过调用这些内核对象的函数
+    * 来完成的
+    *
+    */
+    SemaphoreHandle_t MuxSem_Handle =NULL;
+
+    /**************************** 全局变量声明 *******************************/
+    /*
+    * 当我们在写应用程序的时候，可能需要用到一些全局变量。
+    */
+
+
+    /**************************** 宏定义 ************************************/
+    /*
+    * 当我们在写应用程序的时候，可能需要用到一些宏定义。
+    */
+
+
+    /*
+    *************************************************************************
+    *                             函数声明
+    *************************************************************************
+    */
+    static void AppTaskCreate(void);/* 用于创建任务 */
+
+    static void LowPriority_Task(void* pvParameters);/* LowPriority_Task任务实现 */
+    static void MidPriority_Task(void* pvParameters);/* MidPriority_Task任务实现 */
+    static void HighPriority_Task(void* pvParameters);/* MidPriority_Task任务实现 */
+
+    static void BSP_Init(void);/* 用于初始化板载相关资源 */
+
+    /*****************************************************************
+    * @brief  主函数
+    * @param  无
+    * @retval 无
+    * @note   第一步：开发板硬件初始化
+    第二步：创建APP应用任务
+    第三步：启动FreeRTOS，开始多任务调度
+    ****************************************************************/
+    int main(void)
+    {
+        BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
+
+    /* 开发板硬件初始化 */
+        BSP_Init();
+        printf("这是一个[野火]-STM32全系列开发板-FreeRTOS优先级翻转实验！\n");
+    /* 创建AppTaskCreate任务 */
+        xReturn = xTaskCreate((TaskFunction_t )AppTaskCreate, /*任务入口函数 */
+                            (const char*    )"AppTaskCreate",/* 任务名字 */
+                            (uint16_t       )512,  /* 任务栈大小 */
+    (void*          )NULL,/* 任务入口函数参数 */
+    (UBaseType_t    )1, /* 任务的优先级 */
+                            (TaskHandle_t*)&AppTaskCreate_Handle);/* 任务控制块指针 */
+    /* 启动任务调度 */
+    if (pdPASS == xReturn)
+            vTaskStartScheduler();   /* 启动任务，开启调度 */
+    else
+    return -1;
+
+    while (1);  /* 正常不会执行到这里 */
+    }
+
+    /***********************************************************************
+    * @ 函数名： AppTaskCreate
+    * @ 功能说明：为了方便管理，所有的任务创建函数都放在这个函数里面
+    * @ 参数：无
+    * @ 返回值：无
+    *******************************************************************/
+    static void AppTaskCreate(void)
+    {
+        BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
+
+        taskENTER_CRITICAL();           //进入临界区
+
+    /* 创建MuxSem */
+        MuxSem_Handle = xSemaphoreCreateMutex();
+    if (NULL != MuxSem_Handle)
+            printf("MuxSem_Handle互斥量创建成功!\r\n");
+
+        xReturn = xSemaphoreGive( MuxSem_Handle );//给出互斥量
+    //  if( xReturn == pdTRUE )
+    //    printf("释放信号量!\r\n");
+
+    /* 创建LowPriority_Task任务 */
+        xReturn = xTaskCreate((TaskFunction_t )LowPriority_Task,/*任务入口函数 */
+    (const char*  )"LowPriority_Task",/*任务名字 */
+                        (uint16_t       )512,   /* 任务栈大小 */
+    (void*          )NULL,	/* 任务入口函数参数 */
+                        (UBaseType_t    )2,	/* 任务的优先级 */
+    (TaskHandle_t* )&LowPriority_Task_Handle);/* 任务控制块指针 */
+    if (pdPASS == xReturn)
+            printf("创建LowPriority_Task任务成功!\r\n");
+
+    /* 创建MidPriority_Task任务 */
+        xReturn = xTaskCreate((TaskFunction_t )MidPriority_Task,  /* 任务入口函数 */
+    (const char*   )"MidPriority_Task",/*任务名字 */
+                        (uint16_t       )512,  /* 任务栈大小 */
+    (void*          )NULL,/* 任务入口函数参数 */
+    (UBaseType_t    )3, /* 任务的优先级 */
+    (TaskHandle_t* )&MidPriority_Task_Handle);/* 任务控制块指针 */
+    if (pdPASS == xReturn)
+            printf("创建MidPriority_Task任务成功!\n");
+
+    /* 创建HighPriority_Task任务 */
+        xReturn = xTaskCreate((TaskFunction_t )HighPriority_Task,  /* 任务入口函数 */
+    (const char*    )"HighPriority_Task",/* 任务名字 */
+                        (uint16_t       )512,  /* 任务栈大小 */
+    (void*          )NULL,/* 任务入口函数参数 */
+                        (UBaseType_t    )4, /* 任务的优先级 */
+    (TaskHandle_t*  )&HighPriority_Task_Handle);/*任务控制块指针 */
+    if (pdPASS == xReturn)
+            printf("创建HighPriority_Task任务成功!\n\n");
+
+        vTaskDelete(AppTaskCreate_Handle); //删除AppTaskCreate任务
+
+        taskEXIT_CRITICAL();            //退出临界区
+    }
+
+    /**********************************************************************
+    * @ 函数名： LowPriority_Task
+    * @ 功能说明： LowPriority_Task任务主体
+    * @ 参数：
+    * @ 返回值：无
+    ********************************************************************/
+    static void LowPriority_Task(void* parameter)
+    {
+    static uint32_t i;
+        BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
+    while (1) {
+            printf("LowPriority_Task 获取信号量\n");
+    //获取互斥量 MuxSem,没获取到则一直等待
+            xReturn = xSemaphoreTake(MuxSem_Handle,/* 互斥量句柄 */
+                                    portMAX_DELAY); /* 等待时间 */
+    if (pdTRUE == xReturn)
+                printf("LowPriority_Task Runing\n\n");
+
+    for (i=0; i<2000000; i++) { //模拟低优先级任务占用互斥量
+                taskYIELD();//发起任务调度
+            }
+
+            printf("LowPriority_Task 释放信号量!\r\n");
+            xReturn = xSemaphoreGive( MuxSem_Handle );//给出互斥量
+
+            LED1_TOGGLE;
+
+            vTaskDelay(1000);
+        }
+    }
+
+    /**********************************************************************
+    * @ 函数名： MidPriority_Task
+    * @ 功能说明： MidPriority_Task任务主体
+    * @ 参数：
+    * @ 返回值：无
+    ********************************************************************/
+    static void MidPriority_Task(void* parameter)
+    {
+    while (1) {
+            printf("MidPriority_Task Runing\n");
+            vTaskDelay(1000);
+        }
+    }
+
+    /**********************************************************************
+    * @ 函数名： HighPriority_Task
+    * @ 功能说明： HighPriority_Task 任务主体
+    * @ 参数：
+    * @ 返回值：无
+    ********************************************************************/
+    static void HighPriority_Task(void* parameter)
+    {
+        BaseType_t xReturn = pdTRUE;/* 定义一个创建信息返回值，默认为pdPASS */
+    while (1) {
+            printf("HighPriority_Task 获取信号量\n");
+    //获取互斥量 MuxSem,没获取到则一直等待
+            xReturn = xSemaphoreTake(MuxSem_Handle,/* 互斥量句柄 */
+                                    portMAX_DELAY); /* 等待时间 */
+    if (pdTRUE == xReturn)
+                printf("HighPriority_Task Runing\n");
+            LED1_TOGGLE;
+
+            printf("HighPriority_Task 释放信号量!\r\n");
+            xReturn = xSemaphoreGive( MuxSem_Handle );//给出互斥量
+
+            vTaskDelay(1000);
+        }
+    }
+
+    /***********************************************************************
+    * @ 函数名： BSP_Init
+    * @ 功能说明：板级外设初始化，所有板子上的初始化均可放在这个函数里面
+    * @ 参数：
+    * @ 返回值：无
+    *********************************************************************/
+    static void BSP_Init(void)
+    {
+    /*
+        * STM32中断优先级分组为4，即4bit都用来表示抢占优先级，范围为：0~15
+        * 优先级分组只需要分组一次即可，以后如果有其他的任务需要用到中断，
+        * 都统一用这个优先级分组，千万不要再分组，切忌。
+        */
+        NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
+
+    /* LED 初始化 */
+        LED_GPIO_Config();
+
+    /* 串口初始化	*/
+        USART_Config();
+
+    /* 按键初始化	*/
+        Key_GPIO_Config();
+
+    }
+
+    /************************END OF FILE****************************/
 
-2 \\*
-
-3 \* @file main.c
-
-4 \* @author fire
-
-5 \* @version V1.0
-
-6 \* @date 2018-xx-xx
-
-7 \* @brief FreeRTOS V9.0.0 + STM32 互斥量同步
-
-8 \\*
-
-9 \* @attention
-
-10 \*
-
-11 \* 实验平台:野火 STM32 开发板
-
-12 \* 论坛 :http://www.firebbs.cn
-
-13 \* 淘宝 :https://fire-stm32.taobao.com
-
-14 \*
-
-15 \\*
-
-16 \*/
-
-17
-
-18 /\*
-
-19 \\*
-
-20 \* 包含的头文件
-
-21 \\*
-
-22 \*/
-
-23 /\* FreeRTOS头文件 \*/
-
-24 #include"FreeRTOS.h"
-
-25 #include"task.h"
-
-26 #include"queue.h"
-
-27 #include"semphr.h"
-
-28 /\* 开发板硬件bsp头文件 \*/
-
-29 #include"bsp_led.h"
-
-30 #include"bsp_usart.h"
-
-31 #include"bsp_key.h"
-
-32 /\* 任务句柄 \/
-
-33 /\*
-
-34 \* 任务句柄是一个指针，用于指向一个任务，当任务创建好之后，它就具有了一个任务句柄
-
-35 \* 以后我们要想操作这个任务都需要通过这个任务句柄，如果是自身的任务操作自己，那么
-
-36 \* 这个句柄可以为NULL。
-
-37 \*/
-
-38 static TaskHandle_t AppTaskCreate_Handle = NULL;/\* 创建任务句柄 \*/
-
-**39 static TaskHandle_t LowPriority_Task_Handle = NULL;/\* LowPriority_Task任务句柄 \*/**
-
-**40 static TaskHandle_t MidPriority_Task_Handle = NULL;/\* MidPriority_Task任务句柄 \*/**
-
-**41 static TaskHandle_t HighPriority_Task_Handle = NULL;/\* HighPriority_Task任务句柄 \*/**
-
-42 /\* 内核对象句柄 \/
-
-43 /\*
-
-44 \* 信号量，消息队列，事件标志组，软件定时器这些都属于内核的对象，要想使用这些内核
-
-45 \* 对象，必须先创建，创建成功之后会返回一个相应的句柄。实际上就是一个指针，后续我
-
-46 \* 们就可以通过这个句柄操作这些内核对象。
-
-47 \*
-
-48 \*
-
-49 内核对象说白了就是一种全局的数据结构，通过这些数据结构我们可以实现任务间的通信，
-
-50 \* 任务间的事件同步等各种功能。至于这些功能的实现我们是通过调用这些内核对象的函数
-
-51 \* 来完成的
-
-52 \*
-
-53 \*/
-
-**54 SemaphoreHandle_t MuxSem_Handle =NULL;**
-
-55
-
-56 /\* 全局变量声明 \/
-
-57 /\*
-
-58 \* 当我们在写应用程序的时候，可能需要用到一些全局变量。
-
-59 \*/
-
-60
-
-61
-
-62 /\* 宏定义 \/
-
-63 /\*
-
-64 \* 当我们在写应用程序的时候，可能需要用到一些宏定义。
-
-65 \*/
-
-66
-
-67
-
-68 /\*
-
-69 \\*
-
-70 \* 函数声明
-
-71 \\*
-
-72 \*/
-
-73 static void AppTaskCreate(void);/\* 用于创建任务 \*/
-
-74
-
-75 static void LowPriority_Task(void\* pvParameters);/\* LowPriority_Task任务实现 \*/
-
-76 static void MidPriority_Task(void\* pvParameters);/\* MidPriority_Task任务实现 \*/
-
-77 static void HighPriority_Task(void\* pvParameters);/\* MidPriority_Task任务实现 \*/
-
-78
-
-79 static void BSP_Init(void);/\* 用于初始化板载相关资源 \*/
-
-80
-
-81 /\*
-
-82 \* @brief 主函数
-
-83 \* @param 无
-
-84 \* @retval 无
-
-85 \* @note 第一步：开发板硬件初始化
-
-86 第二步：创建APP应用任务
-
-87 第三步：启动FreeRTOS，开始多任务调度
-
-88 \/
-
-89 int main(void)
-
-90 {
-
-91 BaseType_t xReturn = pdPASS;/\* 定义一个创建信息返回值，默认为pdPASS \*/
-
-92
-
-93 /\* 开发板硬件初始化 \*/
-
-94 BSP_Init();
-
-95 printf("这是一个[野火]-STM32全系列开发板-FreeRTOS优先级翻转实验！\n");
-
-96 /\* 创建AppTaskCreate任务 \*/
-
-97 xReturn = xTaskCreate((TaskFunction_t )AppTaskCreate, /*任务入口函数 \*/
-
-98 (const char\* )"AppTaskCreate",/\* 任务名字 \*/
-
-99 (uint16_t )512, /\* 任务栈大小 \*/
-
-100 (void\* )NULL,/\* 任务入口函数参数 \*/
-
-101 (UBaseType_t )1, /\* 任务的优先级 \*/
-
-102 (TaskHandle_t*)&AppTaskCreate_Handle);/\* 任务控制块指针 \*/
-
-103 /\* 启动任务调度 \*/
-
-104 if (pdPASS == xReturn)
-
-105 vTaskStartScheduler(); /\* 启动任务，开启调度 \*/
-
-106 else
-
-107 return -1;
-
-108
-
-109 while (1); /\* 正常不会执行到这里 \*/
-
-110 }
-
-111
-
-112
-
-113 /\*
-
-114 \* @ 函数名： AppTaskCreate
-
-115 \* @ 功能说明：为了方便管理，所有的任务创建函数都放在这个函数里面
-
-116 \* @ 参数：无
-
-117 \* @ 返回值：无
-
-118 \/
-
-119 static void AppTaskCreate(void)
-
-120 {
-
-121 BaseType_t xReturn = pdPASS;/\* 定义一个创建信息返回值，默认为pdPASS \*/
-
-122
-
-123 taskENTER_CRITICAL(); //进入临界区
-
-124
-
-125 /\* 创建MuxSem \*/
-
-126 MuxSem_Handle = xSemaphoreCreateMutex();
-
-127 if (NULL != MuxSem_Handle)
-
-128 printf("MuxSem_Handle互斥量创建成功!\r\n");
-
-129
-
-130 xReturn = xSemaphoreGive( MuxSem_Handle );//给出互斥量
-
-131 // if( xReturn == pdTRUE )
-
-132 // printf("释放信号量!\r\n");
-
-133
-
-134 /\* 创建LowPriority_Task任务 \*/
-
-135 xReturn = xTaskCreate((TaskFunction_t )LowPriority_Task,/*任务入口函数 \*/
-
-136 (const char\* )"LowPriority_Task",/*任务名字 \*/
-
-137 (uint16_t )512, /\* 任务栈大小 \*/
-
-138 (void\* )NULL, /\* 任务入口函数参数 \*/
-
-139 (UBaseType_t )2, /\* 任务的优先级 \*/
-
-140 (TaskHandle_t\* )&LowPriority_Task_Handle);/\* 任务控制块指针 \*/
-
-141 if (pdPASS == xReturn)
-
-142 printf("创建LowPriority_Task任务成功!\r\n");
-
-143
-
-144 /\* 创建MidPriority_Task任务 \*/
-
-145 xReturn = xTaskCreate((TaskFunction_t )MidPriority_Task, /\* 任务入口函数 \*/
-
-146 (const char\* )"MidPriority_Task",/*任务名字 \*/
-
-147 (uint16_t )512, /\* 任务栈大小 \*/
-
-148 (void\* )NULL,/\* 任务入口函数参数 \*/
-
-149 (UBaseType_t )3, /\* 任务的优先级 \*/
-
-150 (TaskHandle_t\* )&MidPriority_Task_Handle);/\* 任务控制块指针 \*/
-
-151 if (pdPASS == xReturn)
-
-152 printf("创建MidPriority_Task任务成功!\n");
-
-153
-
-154 /\* 创建HighPriority_Task任务 \*/
-
-155 xReturn = xTaskCreate((TaskFunction_t )HighPriority_Task, /\* 任务入口函数 \*/
-
-156 (const char\* )"HighPriority_Task",/\* 任务名字 \*/
-
-157 (uint16_t )512, /\* 任务栈大小 \*/
-
-158 (void\* )NULL,/\* 任务入口函数参数 \*/
-
-159 (UBaseType_t )4, /\* 任务的优先级 \*/
-
-160 (TaskHandle_t\* )&HighPriority_Task_Handle);/*任务控制块指针 \*/
-
-161 if (pdPASS == xReturn)
-
-162 printf("创建HighPriority_Task任务成功!\n\n");
-
-163
-
-164 vTaskDelete(AppTaskCreate_Handle); //删除AppTaskCreate任务
-
-165
-
-166 taskEXIT_CRITICAL(); //退出临界区
-
-167 }
-
-168
-
-169
-
-170
-
-171 /\*
-
-172 \* @ 函数名： LowPriority_Task
-
-173 \* @ 功能说明： LowPriority_Task任务主体
-
-174 \* @ 参数：
-
-175 \* @ 返回值：无
-
-176 \/
-
-**177 static void LowPriority_Task(void\* parameter)**
-
-**178 {**
-
-**179 static uint32_t i;**
-
-**180 BaseType_t xReturn = pdPASS;/\* 定义一个创建信息返回值，默认为pdPASS \*/**
-
-**181 while (1) {**
-
-**182 printf("LowPriority_Task 获取信号量\n");**
-
-**183 //获取互斥量 MuxSem,没获取到则一直等待**
-
-**184 xReturn = xSemaphoreTake(MuxSem_Handle,/\* 互斥量句柄 \*/**
-
-**185 portMAX_DELAY); /\* 等待时间 \*/**
-
-**186 if (pdTRUE == xReturn)**
-
-**187 printf("LowPriority_Task Runing\n\n");**
-
-**188**
-
-**189 for (i=0; i<2000000; i++) { //模拟低优先级任务占用互斥量**
-
-**190 taskYIELD();//发起任务调度**
-
-**191 }**
-
-**192**
-
-**193 printf("LowPriority_Task 释放信号量!\r\n");**
-
-**194 xReturn = xSemaphoreGive( MuxSem_Handle );//给出互斥量**
-
-**195**
-
-**196 LED1_TOGGLE;**
-
-**197**
-
-**198 vTaskDelay(1000);**
-
-**199 }**
-
-**200 }**
-
-201
-
-202 /\*
-
-203 \* @ 函数名： MidPriority_Task
-
-204 \* @ 功能说明： MidPriority_Task任务主体
-
-205 \* @ 参数：
-
-206 \* @ 返回值：无
-
-207 \/
-
-**208 static void MidPriority_Task(void\* parameter)**
-
-**209 {**
-
-**210 while (1) {**
-
-**211 printf("MidPriority_Task Runing\n");**
-
-**212 vTaskDelay(1000);**
-
-**213 }**
-
-**214 }**
-
-215
-
-216 /\*
-
-217 \* @ 函数名： HighPriority_Task
-
-218 \* @ 功能说明： HighPriority_Task 任务主体
-
-219 \* @ 参数：
-
-220 \* @ 返回值：无
-
-221 \/
-
-**222 static void HighPriority_Task(void\* parameter)**
-
-**223 {**
-
-**224 BaseType_t xReturn = pdTRUE;/\* 定义一个创建信息返回值，默认为pdPASS \*/**
-
-**225 while (1) {**
-
-**226 printf("HighPriority_Task 获取信号量\n");**
-
-**227 //获取互斥量 MuxSem,没获取到则一直等待**
-
-**228 xReturn = xSemaphoreTake(MuxSem_Handle,/\* 互斥量句柄 \*/**
-
-**229 portMAX_DELAY); /\* 等待时间 \*/**
-
-**230 if (pdTRUE == xReturn)**
-
-**231 printf("HighPriority_Task Runing\n");**
-
-**232 LED1_TOGGLE;**
-
-**233**
-
-**234 printf("HighPriority_Task 释放信号量!\r\n");**
-
-**235 xReturn = xSemaphoreGive( MuxSem_Handle );//给出互斥量**
-
-**236**
-
-**237**
-
-**238 vTaskDelay(1000);**
-
-**239 }**
-
-**240 }**
-
-241
-
-242
-
-243 /\*
-
-244 \* @ 函数名： BSP_Init
-
-245 \* @ 功能说明：板级外设初始化，所有板子上的初始化均可放在这个函数里面
-
-246 \* @ 参数：
-
-247 \* @ 返回值：无
-
-248 \/
-
-249 static void BSP_Init(void)
-
-250 {
-
-251 /\*
-
-252 \* STM32中断优先级分组为4，即4bit都用来表示抢占优先级，范围为：0~15
-
-253 \* 优先级分组只需要分组一次即可，以后如果有其他的任务需要用到中断，
-
-254 \* 都统一用这个优先级分组，千万不要再分组，切忌。
-
-255 \*/
-
-256 NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
-
-257
-
-258 /\* LED 初始化 \*/
-
-259 LED_GPIO_Config();
-
-260
-
-261 /\* 串口初始化 \*/
-
-262 USART_Config();
-
-263
-
-264 /\* 按键初始化 \*/
-
-265 Key_GPIO_Config();
-
-266
-
-267 }
-
-268
-
-269 /END OF FILE/
 
 互斥量实验现象
 ~~~~~~~~~~~~~~~~
