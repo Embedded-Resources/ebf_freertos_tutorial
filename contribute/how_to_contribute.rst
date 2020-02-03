@@ -18,7 +18,7 @@ gitee主要是方便国内用户下载，可在这两个平台提交 **pull requ
 
 
 - github仓库地址：https://github.com/Embedfire-freertos/ebf_freertos_tutorial.git
-- gitee 仓库地址：https://gitee.com/wildfireteam/ebf_freertos_tutorial
+- gitee 仓库地址：https://gitee.com/Embedfire-freertos/ebf_freertos_tutorial
 
 
 文档在线阅读与pdf
