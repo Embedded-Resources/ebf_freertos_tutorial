@@ -10,4 +10,4 @@
 
 点击右侧链接可在线阅读本项目文档：《 `FreeRTOS 内核实现与应用开发实战—基于STM32 <https://ebf_freertos_tutorial.readthedocs.io>`_ 》
 
-本书主要面向有MCU开发经验，希望从零开始学习Linux开发的嵌入式软件工程师及在校学生。
+本书主要面向有MCU开发经验，希望从零开始学习FreeRTOS开发的嵌入式软件工程师及在校学生。
